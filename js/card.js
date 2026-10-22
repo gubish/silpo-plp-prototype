@@ -10,7 +10,7 @@
    Рівень картки: A — 0–1 додатковий рядок, B — 2.
    Nutri-Score — окремим рядком одразу під назвою (settings.nutriPlace = 'bottom'):
    він не рахується в ліміт і не відривається від назви. 'slot' — як у брифі, у слоті «Мета».
-   Висоту ряду вирівнює сітка (stretch); довга назва бере 2–4 рядки, а під короткою
+   Висоту ряду вирівнює сітка (stretch); назва — максимум 3 рядки, за потреби 2; під короткою
    вільне місце лишається внизу картки, не між назвою й Nutri-Score.
 
    Card.html(item)        — розмітка картки (item з DATA: { id, badges, liked })
@@ -41,9 +41,10 @@ const Card = {
     benefits: 'Бенефіти', bbLine: 'ББ окремим рядком', markdown: 'Термін', meta: 'Nutri-Score', installment: 'Розтермінування',
     bulk: '«від 2 шт»', bubble: 'бабл', bb: 'ББ',
   },
-  NAME_BASE: { A: 3, B: 4 }, // рядків назви в ряду цього рівня без додаткових рядків
+  // рядків назви = база − додаткові рядки картки, у межах 2–3: 0–1 доп. → 3 рядки, 2 доп. → 2
+  NAME_BASE: { A: 4, B: 4 },
   NAME_MIN: 2,
-  NAME_MAX: 4,
+  NAME_MAX: 3,             // назва — не більше 3 рядків; за потреби (2 додаткові рядки) — 2
   NAME_LINE: 16,             // line-height назви, px
 
   /* ---------------- Формати ---------------- */
@@ -361,7 +362,7 @@ const Card = {
       rows.forEach(row => {
         const level = carousel || row.some(c => c.dataset.level === 'B') ? 'B' : 'A';
         row.forEach(c => {
-          // рядків_назви = база рівня ряду − додаткові рядки картки (у межах 2–4)
+          // рядків_назви = база рівня ряду − додаткові рядки картки (у межах 2–3)
           const lines = this.clampLines(this.NAME_BASE[level] - Number(c.dataset.extras));
           const name = c.querySelector('.pc-name');
           name.style.minHeight = lines * this.NAME_LINE + 'px';
@@ -370,7 +371,7 @@ const Card = {
         });
       });
       // Ряд вирівняв висоту карток. Назві дістається її місце плюс вільне під останнім елементом:
-      // floor(висота / line-height), 2–4 рядки. Спершу міряємо всі, потім міняємо, щоб не зсунути сусідів.
+      // floor(висота / line-height), 2–3 рядки. Спершу міряємо всі, потім міняємо, щоб не зсунути сусідів.
       const fits = visible.map(c => {
         const name = c.querySelector('.pc-name');
         const body = c.querySelector('.pc-body');

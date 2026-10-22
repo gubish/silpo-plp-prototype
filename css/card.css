@@ -122,7 +122,7 @@
 .pc-meta--compact { height: 18px; }
 .pc-meta--bottom { margin-top: var(--space-4); }
 
-/* Вага й назва: назва гумова, 2–4 рядки (кількість задає js/card.js); вільне місце лишається внизу картки */
+/* Вага й назва: назва гумова, 2–3 рядки (кількість задає js/card.js); вільне місце лишається внизу картки */
 .pc-text { display: flex; flex-direction: column; gap: 2px; }
 .pc-weight { font-size: var(--fs-caption-sm); line-height: var(--lh-caption-sm); font-weight: var(--fw-semibold); }
 .pc-name {
