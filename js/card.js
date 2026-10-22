@@ -254,7 +254,7 @@ const Card = {
   },
 
   /** Стара картка («Як є»): усе підряд, без ліміту рядків і вирівнювання; ББ — бабл «б» на фото + чип із сумою;
-      на фото не більше 2 баблів (ББ → «Я ще ОК» → промо).
+      на фото не більше 2 баблів (ББ → «Я ще ОК» → промо); «довга» картка (2+ рядки під ціною) — назва до 2 рядків.
       Порядок під фото: ціна → знижка → бенефіти (ББ, «від 2 шт») → термін уцінки → розтермінування */
   htmlLegacy(item, p, attrs) {
     const bb = this.bbOf(p);
@@ -280,7 +280,7 @@ const Card = {
           ${lines.join('')}
           <div class="pc-text">
             <p class="pc-weight">${p.weight}</p>
-            <p class="pc-name">${p.name}</p>
+            <p class="pc-name ${lines.length >= 2 ? 'pc-name--short' : ''}">${p.name}</p>
           </div>
           ${p.nutri ? this.meta(p) : ''}
         </div>
@@ -370,18 +370,12 @@ const Card = {
           c.dataset.rowLevel = level;
         });
       });
-      // Ряд вирівняв висоту карток. Назві дістається її місце плюс вільне під останнім елементом:
-      // floor(висота / line-height), 2–3 рядки. Спершу міряємо всі, потім міняємо, щоб не зсунути сусідів.
-      const fits = visible.map(c => {
-        const name = c.querySelector('.pc-name');
-        const body = c.querySelector('.pc-body');
-        const free = body.getBoundingClientRect().bottom - body.lastElementChild.getBoundingClientRect().bottom;
-        return [c, name, this.clampLines(Math.floor((name.clientHeight + free) / this.NAME_LINE)), c.offsetHeight];
-      });
+      // Ряд вирівняв висоту карток. Назва не росте понад свою норму (3 рядки, у «довгої» картки з двома
+      // додатковими рядками — 2): зайве місце лишається внизу картки. Спершу міряємо всі, потім міняємо.
+      const fits = visible.map(c => [c, c.querySelector('.pc-name'), Number(c.querySelector('.pc-name').style.webkitLineClamp), c.offsetHeight]);
       fits.forEach(([card, name, lines, height]) => {
         card.style.minHeight = height + 'px'; // висоту ряду тримає картка, а не запас під назвою
         name.style.minHeight = '';
-        name.style.webkitLineClamp = lines;
         // назва — лише своєї висоти: Nutri-Score одразу під нею, порожнеча — внизу картки
         name.style.maxHeight = lines * this.NAME_LINE + 'px'; // Chrome інакше показує шматок наступного рядка
       });

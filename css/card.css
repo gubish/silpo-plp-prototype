@@ -143,6 +143,7 @@
 .pc-legacy { align-items: start; }
 .pc-carousel.pc-legacy { align-items: flex-start; }
 .pc-legacy .pc-name { flex: none; }
+.pc-legacy .pc-name--short { -webkit-line-clamp: 2; } /* «довга» картка: 2+ рядки під ціною — назва до 2 рядків */
 
 /* ---------- Debug-оверлей (демо-сторінка) ---------- */
 .pc-debug {
