@@ -28,8 +28,43 @@
   gap: var(--space-4);
 }
 .pc-bubbles > img { width: 32px; height: 32px; }
+/* прямокутні бейджі на фото (тег знижки, ББ із сумою) оптично висунуті трохи лівіше за край картки */
+.pc-bubbles > .pc-discount-photo,
+.pc-bubbles > .pc-bb--photo { margin-left: -4px; }
 /* знижка бейджем на фото (режим «Знижка на фото») — той самий тег −30%, що й у рядку, такого ж розміру */
 .pc-discount-photo { background: var(--brand-500); font-weight: var(--fw-semibold); }
+/* знижка на фото круглим бейджем — як бабл «%» (32 px, той самий колір), але з величиною знижки */
+.pc-discount-round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fe8522; /* колір бабла «%» */
+  color: var(--white);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.4px;
+}
+.pc-discount-round small { font-size: 9px; font-weight: var(--fw-bold); }
+/* ББ на фото круглим бейджем — фіолетове коло 32 px із сумою (колір монетки «Власного Рахунку») */
+.pc-bb-round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--violet-600);
+  color: var(--white);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.4px;
+}
+.pc-bb-round--long { font-size: 10px; letter-spacing: -0.5px; }
 .pc-expected {
   position: absolute;
   left: 0;

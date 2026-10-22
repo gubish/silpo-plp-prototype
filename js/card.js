@@ -24,11 +24,13 @@ const Card = {
     bbMode: 'row',      // 'row' — чипом у рядку бенефітів (не влазить — бейджем на фото) | 'photo' — завжди бейджем на фото
     nutriPlace: 'bottom', // 'bottom' — окремим рядком одразу під назвою | 'slot' — у слоті «Мета» (рахується в ліміт рядків)
     oldPricePlace: 'row',    // 'row' — завжди окремим рядком | 'inline' — поруч із поточною (не влазить — окремим рядком)
-    discountPlace: 'row', // 'row' — тег −30% у рядку бенефітів | 'photo' — лише бейджем −30% на фото (без дубля)
+    discountPlace: 'row',
+    discountStyle: 'tag',
+    bbStyle: 'tag',       // ББ на фото: 'tag' — компактний прямокутний «ⓑ +12» | 'round' — круглий фіолетовий із сумою // знижка на фото: 'tag' — прямокутний тег −30% | 'round' — круглий бейдж як «%», але з величиною // 'row' — тег −30% у рядку бенефітів | 'photo' — лише бейджем −30% на фото (без дубля)
     nutriStyle: 'official', // 'official' — модуль без змін | 'compact' — без напису й білої підкладки (НЕ за хартією, лише для порівняння)
     debug: false,       // підпис рівня, рядків назви й схованого на кожній картці
     highlightHidden: false, // підсвітити картки, де щось не влізло (data-hidden не порожній)
-    roundBubbles: true, // false — круглі бейджі на фото («Я ще ОК», промо, «б» ББ) не показуємо; прямокутні (знижка, ББ із сумою) лишаються
+    roundBubbles: true, // false — круглі бейджі на фото не показуємо: «Я ще ОК», промо, «б» ББ, а також знижку й ББ у круглому вигляді
   },
 
   MAX_EXTRAS: 2,
@@ -39,7 +41,7 @@ const Card = {
   PRIORITY: ['markdown', 'benefits', 'meta', 'installment', 'bbLine'],
   NAMES: {
     benefits: 'Бенефіти', bbLine: 'ББ окремим рядком', markdown: 'Термін', meta: 'Nutri-Score', installment: 'Розтермінування',
-    bulk: '«від 2 шт»', bubble: 'бабл', bb: 'ББ',
+    bulk: '«від 2 шт»', bubble: 'бабл', bb: 'сума ББ',
   },
   // рядків назви = база − додаткові рядки картки, у межах 2–3: 0–1 доп. → 3 рядки, 2 доп. → 2
   NAME_BASE: { A: 4, B: 4 },
@@ -108,8 +110,10 @@ const Card = {
     const candidates = this.PRIORITY.filter(k => has[k]);
     const extras = candidates.slice(0, this.MAX_EXTRAS);
     candidates.slice(this.MAX_EXTRAS).forEach(k => hidden.push(this.NAMES[k === 'bbLine' ? 'bb' : k]));
-    // окремому рядку ББ не лишилось місця (термін уцінки, розтермінування…) — ББ не показуємо зовсім
-    if (has.bbLine && !extras.includes('bbLine')) bb = 0;
+    // окремому рядку ББ не лишилось місця (термін уцінки, розтермінування…) — суму ББ не показуємо,
+    // а фіолетовий бабл «б» лишається кандидатом на фото (найслабший серед баблів)
+    const bbChipDropped = has.bbLine && !extras.includes('bbLine');
+    if (bbChipDropped) bb = 0;
 
     // Бабли на фото: «Я ще ОК» (найсильніший) → знижка (коли вона на фото) → промо → ББ, максимум 2.
     // Промо можуть витіснити ББ. ББ на фото — бейдж із сумою; ББ чипом у рядку — на фото фіолетовий бабл «б»
@@ -130,10 +134,11 @@ const Card = {
       if (discountOnPhoto) bubbles.push({ discount: p.discount });
       bubbles.push(...round.slice(p.markdown ? 1 : 0));
       if (bb) bubbles.push(bbOnPhoto ? { bb } : { image: DATA.card.bbBubble });
+      else if (bbChipDropped) bubbles.push({ image: DATA.card.bbBubble });
       shown = bubbles.slice(0, this.MAX_BUBBLES);
     }
     // круглі бейджі вимкнені — їх не показуємо взагалі, тож і «не влізло» про них не пишемо
-    bubbles.filter(b => !shown.includes(b) && (this.settings.roundBubbles || !b.image)).forEach(b => hidden.push(this.NAMES.bubble + ' «'
+    bubbles.filter(b => !shown.includes(b) && (this.settings.roundBubbles || !this.isRound(b))).forEach(b => hidden.push(this.NAMES.bubble + ' «'
       + (b.image ? b.image.alt : b.discount ? '−' + b.discount + '%' : 'ББ') + '»'));
 
     return {
@@ -144,6 +149,16 @@ const Card = {
       // порядок на фото: круглі бабли (зокрема «б» ББ) завжди перші, далі знижка, далі бейдж ББ із сумою
       bubbles: shown.sort((a, b) => this.bubbleOrder(a) - this.bubbleOrder(b)),
     };
+  },
+
+  /** Знижка на фото кругла, лише коли круглі бейджі ввімкнені; вимкнені — стає прямокутним тегом, а не зникає */
+  discountRound() { return this.settings.discountStyle === 'round' && this.settings.roundBubbles; },
+
+  /** Круглий бейдж: усі бабли-картинки, а також знижка й ББ, якщо вони в круглому вигляді */
+  isRound(b) {
+    if (b.discount) return this.discountRound();
+    if (b.bb) return this.settings.bbStyle === 'round';
+    return !!b.image;
   },
 
   /** Порядок на фото: 0 — група круглих (і фіолетовий «б» ББ, хоч він і не круглий), 1 — знижка, 2 — бейдж ББ із сумою */
@@ -172,6 +187,11 @@ const Card = {
   /* ---------------- Дрібні елементи ---------------- */
   bbChip(bb, onPhoto) {
     const coin = '<img src="assets/icons/card/vr-coin-14.svg" alt="балів">';
+    // на фото круглий: фіолетове коло 32 px із короткою сумою (довга сума — дрібніше, щоб влізла)
+    if (onPhoto && this.settings.bbStyle === 'round') {
+      const short = this.bbShort(bb);
+      return `<span class="pc-bb-round ${short.length > 4 ? 'pc-bb-round--long' : ''}" title="${this.bbText(bb)} балів" aria-label="${this.bbText(bb)} балів">${short}</span>`;
+    }
     // на фото — компактний бейдж розміром із тег знижки, сума скорочена (точна — у підказці)
     return onPhoto
       ? `<span class="pc-bb pc-bb--photo" title="${this.bbText(bb)} балів">${coin}${this.bbShort(bb)}</span>`
@@ -197,14 +217,18 @@ const Card = {
   },
   bubble(b) {
     if (b.bb) return this.bbChip(b.bb, true);
-    if (b.discount) return `<span class="discount-tag pc-discount-photo">−${b.discount}%</span>`;
+    if (b.discount) {
+      return this.discountRound()
+        ? `<span class="pc-discount-round" aria-label="Знижка ${b.discount}%">−${b.discount}<small>%</small></span>`
+        : `<span class="discount-tag pc-discount-photo">−${b.discount}%</span>`;
+    }
     return `<img src="${b.image.image}" alt="${b.image.alt}">`;
   },
   media(item, p, bubbles) {
     return `
       <div class="pc-media">
         <img class="pc-img" src="${p.image}" alt="${p.name}">
-        <div class="pc-bubbles">${bubbles.filter(b => this.settings.roundBubbles || !b.image).map(b => this.bubble(b)).join('')}</div>
+        <div class="pc-bubbles">${bubbles.filter(b => this.settings.roundBubbles || !this.isRound(b)).map(b => this.bubble(b)).join('')}</div>
         ${UI.likeButton(item.liked)}
         ${p.expected ? `<span class="pc-expected">${DATA.card.expected}</span>` : UI.qtyControl(item.id)}
         <span class="pc-debug" hidden></span>
@@ -212,7 +236,7 @@ const Card = {
   },
 
   /** Налаштування, від яких залежить розмітка: змінились — картку перемальовуємо */
-  mode() { return [this.settings.roundBubbles, this.settings.bbMode, this.settings.oldPricePlace, this.settings.discountPlace, this.settings.nutriPlace, this.settings.nutriStyle].join('/'); },
+  mode() { return [this.settings.bbStyle, this.settings.discountStyle, this.settings.roundBubbles, this.settings.bbMode, this.settings.oldPricePlace, this.settings.discountPlace, this.settings.nutriPlace, this.settings.nutriStyle].join('/'); },
 
   /* ---------------- Розмітка ---------------- */
   html(item, variantIndex = 0) {

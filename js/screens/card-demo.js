@@ -34,7 +34,7 @@ Screens.cardDemo = function renderCardDemo(root) {
 /* ---------- Логіка відображення (справа від телефона) ----------
    Повна версія й журнал рішень — docs/card-rules.md; міняєте правило — оновіть обидва.
    Пункт, що відрізняється від налаштувань за замовчуванням, підсвічується (is-changed). */
-const DEMO_DEFAULTS = { rules: false, bbMode: 'row', oldPricePlace: 'row', discountPlace: 'row', nutriPlace: 'bottom', nutriStyle: 'official' };
+const DEMO_DEFAULTS = { rules: false, bbStyle: 'tag', discountStyle: 'tag', bbMode: 'row', oldPricePlace: 'row', discountPlace: 'row', nutriPlace: 'bottom', nutriStyle: 'official' };
 
 function rulesSections(s) {
   const changed = key => s[key] !== DEMO_DEFAULTS[key];
@@ -97,10 +97,12 @@ function rulesSections(s) {
   const oldPrice = s.oldPricePlace === 'row'
     ? item('<b>Попередня ціна</b> — завжди окремим рядком під поточною (у рядку бенефітів, разом зі знижкою).', 'oldPricePlace')
     : item('<b>Попередня ціна</b> — поруч із поточною, дрібніше й закреслена; не влазить — окремим рядком.', 'oldPricePlace');
-  const bbBadge = item('Бейдж ББ на фото — компактний, розміром із тег знижки; сума округлена вниз: <code>+0.5</code>, <code>+12</code>, <code>+1.5к</code>.');
+  const bbBadge = s.bbStyle === 'round'
+    ? item('Бейдж ББ на фото — <b>круглий</b> фіолетовий 32 px із сумою, округленою вниз: <code>+0.5</code>, <code>+12</code>, <code>+1.5к</code>.', 'bbStyle')
+    : item('Бейдж ББ на фото — компактний, розміром із тег знижки; сума округлена вниз: <code>+0.5</code>, <code>+12</code>, <code>+1.5к</code>.');
   const bb = s.bbMode === 'photo'
     ? item('<b>ББ на фото</b> — завжди бейджем із сумою; у рядку бенефітів його немає.', 'bbMode')
-    : item('<b>ББ в рядку</b> — завжди чипом <code>+12.21</code> у рядку бенефітів, на фото — фіолетовий бабл «б» без суми. Не влазить поруч зі знижкою — окремим рядком під нею; але якщо є термін уцінки чи розтермінування — вони важливіші, а ББ не показуємо зовсім.');
+    : item('<b>ББ в рядку</b> — завжди чипом <code>+12.21</code> у рядку бенефітів, на фото — фіолетовий бабл «б» без суми. Не влазить поруч зі знижкою — окремим рядком під нею; але якщо є термін уцінки чи розтермінування — вони важливіші: суму ББ не показуємо, а бабл «б» лишається на фото, якщо там є місце.');
 
   // Хто кого витісняє, коли місця не вистачає: зліва — сильніший
   const displacement = [
@@ -112,7 +114,7 @@ function rulesSections(s) {
     item('<b>Розтермінування</b> (усі товари від 1 000 ₴) витісняють лише термін уцінки' + (slot ? ' і Nutri-Score у слоті' : '')
       + '. Знижка й ББ — ні' + (s.bbMode === 'row' ? ': окремий рядок ББ слабший за розтермінування' : '') + '.'),
     ...(s.bbMode === 'row' ? [
-      item('ББ не влазить поруч зі знижкою → окремим рядком; але є термін уцінки чи розтермінування → ББ <b>зникає</b> (на фото не перелітає).'),
+      item('ББ не влазить поруч зі знижкою → окремим рядком; але є термін уцінки чи розтермінування → сума ББ <b>зникає</b> (на фото не перелітає), бабл «б» лишається, якщо на фото є місце.'),
     ] : [
       item('ББ на фото — займає місце бабла, рядків під фото не витісняє.', 'bbMode'),
     ]),
@@ -162,7 +164,8 @@ function rulesSections(s) {
     { title: 'Ціна і ББ', items: [
       oldPrice,
       discPhoto
-        ? item('<b>Знижка на фото</b> — бейдж <code>−30%</code> на фото замість тегу в рядку.', 'discountPlace')
+        ? item('<b>Знижка на фото</b> — ' + (Card.discountRound()
+            ? 'круглим бейджем, як «%», але з величиною <code>−30%</code>' : 'тегом <code>−30%</code>') + ' замість тегу в рядку.', 'discountPlace')
         : item('<b>Знижка в рядку</b> — тег <code>−30%</code> у рядку бенефітів.'),
       bb,
       bbBadge,
@@ -200,9 +203,9 @@ function renderRules() {
   if (!el) return;
   const s = Card.settings;
   const mode = !s.rules ? 'Як є'
-    : `Нові правила · Знижка: ${s.discountPlace === 'photo' ? 'на фото' : 'в рядку'}`
+    : `Нові правила · Знижка: ${s.discountPlace === 'photo' ? 'на фото' + (Card.discountRound() ? ', кругла' : '') : 'в рядку'}`
       + ` · Попередня ціна: ${s.oldPricePlace === 'row' ? 'окремим рядком' : 'із поточною'}`
-      + ` · ББ: ${s.bbMode === 'photo' ? 'на фото' : 'в рядку'}`
+      + ` · ББ: ${s.bbMode === 'photo' ? 'на фото' + (s.bbStyle === 'round' ? ', круглий' : '') : 'в рядку'}`
       + ` · Nutri-Score: ${s.nutriPlace === 'slot' ? 'у слоті «Мета»' : 'під назвою'}`
       + (s.nutriStyle === 'compact' ? ', компактний' : '');
   el.innerHTML = `
@@ -227,15 +230,27 @@ document.addEventListener('click', e => {
     .forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
   // режим ББ і місце Nutri-Score мають сенс лише з правилами
   document.querySelectorAll('.demo-panel__rules-only').forEach(el => el.classList.toggle('is-disabled', !Card.settings.rules));
+  syncDiscountRound();
   Card.relayout();
   renderRules();
   renderHiddenCount();
 });
 
 document.addEventListener('change', e => {
+  if (e.target.matches('[data-bb-round]')) {
+    Card.settings.bbStyle = e.target.checked ? 'round' : 'tag';
+    Card.relayout();
+    renderRules();
+  }
+  if (e.target.matches('[data-discount-round]')) {
+    Card.settings.discountStyle = e.target.checked ? 'round' : 'tag';
+    Card.relayout();
+    renderRules();
+  }
   if (e.target.matches('[data-round-bubbles]')) {
     Card.settings.roundBubbles = e.target.checked;
     Card.relayout();
+    renderRules();
     renderHiddenCount();
   }
   if (e.target.matches('[data-debug]')) {
@@ -248,6 +263,17 @@ document.addEventListener('change', e => {
     renderHiddenCount();
   }
 });
+
+/** Тумблери «Круглий» мають сенс лише коли знижка / ББ «На фото» — інакше неактивні */
+function syncDiscountRound() {
+  [['[data-discount-round]', Card.settings.discountPlace === 'photo'],
+   ['[data-bb-round]', Card.settings.bbMode === 'photo']].forEach(([sel, active]) => {
+    const input = document.querySelector(sel);
+    if (!input) return;
+    input.disabled = !active;
+    input.closest('label').classList.toggle('is-disabled', !active);
+  });
+}
 
 /** Скільки карток із підсвіченим «не влізло» — під тумблером */
 function renderHiddenCount() {
