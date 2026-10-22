@@ -1,5 +1,5 @@
 /* =====================================================================
-   ДЕМО КАРТКИ ТОВАРУ (demo-card.html): панель керування й секції екрана
+   ДЕМО КАРТКИ ТОВАРУ (index.html): панель керування й секції екрана
    ===================================================================== */
 
 .demo-body { gap: var(--space-24); }
@@ -44,6 +44,25 @@
 .segmented button:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 2px; }
 
 /* ---------- Екран демо ---------- */
+.plp-appbar {
+  position: sticky;
+  top: var(--statusbar-h); /* кріпиться під статус-баром */
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: var(--space-8) var(--space-16);
+  background: var(--white);
+}
+.plp-appbar__title { flex: 1; font-size: 22px; line-height: 26px; font-weight: var(--fw-semibold); }
+/* сітка лістингу: 3 колонки, картка — css/card.css */
+.plp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-24) var(--space-8);
+  align-content: start;
+  padding: var(--space-16);
+}
 #cardDemo { padding-bottom: var(--space-24); }
 .demo-heading {
   padding: var(--space-16) var(--space-16) 0;

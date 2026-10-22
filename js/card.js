@@ -186,7 +186,7 @@ const Card = {
     return `<span class="pc-installment"><img src="assets/icons/card/installment.svg" alt="">${this.fill(DATA.card.installmentText, this.installmentOf(p))}</span>`;
   },
   /** Nutri-Score: офіційний горизонтальний модуль без змін (графічна хартія, docs/card-rules.md п. 7).
-      Велнес-теги в лістингу не показуємо — вони на сторінці товару, а в лістингу є фільтри. */
+      Велнес-теги в картці лістингу не показуємо (правило — docs/card-rules.md п. 7). */
   meta(p, extraClass = '') {
     const compact = this.settings.rules && this.settings.nutriStyle === 'compact'; // «Як є» — завжди офіційний
     const src = this.fill(compact ? DATA.card.nutriLogoCompact : DATA.card.nutriLogo, { grade: p.nutri.toLowerCase() });
