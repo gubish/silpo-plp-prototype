@@ -1,0 +1,172 @@
+/* =====================================================================
+   КАРТКА ТОВАРУ — лістинг і каруселі (js/card.js). Figma: 8602:18153
+   Висоту ряду вирівнює контейнер (grid / flex: stretch), назва забирає залишок.
+   ===================================================================== */
+
+.plp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16); /* фото → текст (Figma «sm») */
+  min-width: 0;
+  cursor: pointer;
+}
+.plp-card[hidden] { display: none; }
+
+/* ---------- Фото: бабли, «обране», «+» / «Очікується» ---------- */
+.pc-media { position: relative; flex: none; aspect-ratio: 1; min-height: 0; } /* min-height — висока фотографія не розтягує квадрат */
+.pc-img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-8); }
+.pc-media .like-btn { position: absolute; right: 0; top: 0; }
+.pc-media .qty { position: absolute; left: 0; right: 0; bottom: 0; }
+.pc-bubbles {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+.pc-bubbles > img { width: 32px; height: 32px; }
+/* знижка бейджем на фото (режим «Знижка на фото») — той самий тег −30%, що й у рядку, такого ж розміру */
+.pc-discount-photo { background: var(--brand-500); font-weight: var(--fw-semibold); }
+.pc-expected {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: var(--radius-8);
+  background: rgba(19, 19, 30, 0.6);
+  color: var(--white);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body-sm);
+  font-weight: var(--fw-semibold);
+}
+/* модуль Nutri-Score не приглушуємо: кольори логотипа змінювати не можна (хартія, с. 6) */
+.plp-card.is-expected :is(.pc-img, .pc-bubbles, .like-btn, .pc-body > :not(.nutri-row)) { opacity: 0.6; }
+
+/* ---------- Текстова зона ---------- */
+.pc-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; color: var(--ink-100); }
+.pc-price,
+.pc-slot { display: flex; align-items: center; gap: var(--space-4); flex: none; overflow: hidden; white-space: nowrap; }
+.pc-price { align-items: baseline; }
+.pc-price__now { flex: none; font-size: var(--fs-body-md); line-height: var(--lh-body-md); font-weight: var(--fw-bold); }
+.pc-body .price-old { flex: none; line-height: var(--lh-caption-sm); color: var(--ink-87); }
+.pc-body .discount-tag { flex: none; background: var(--brand-500); font-weight: var(--fw-semibold); }
+
+/* ББ: чип у рядку бенефітів (Figma «bonus points») і бейдж на фото */
+.pc-bb {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 1px 0 var(--space-4);
+  border-radius: 4px 24px 24px 4px;
+  background: linear-gradient(to left, rgba(240, 232, 248, 0), var(--vr-violet-50));
+  color: var(--vr-violet-700);
+  font-size: var(--fs-caption-sm);
+  line-height: var(--lh-caption-sm);
+  font-weight: var(--fw-semibold);
+}
+.pc-bb img { width: 14px; height: 14px; }
+/* бейдж ББ на фото — компактний, розміром із тег знижки (16 px), монетка 12 px */
+.pc-bb--photo { gap: 1px; padding: 0 4px 0 2px; border-radius: var(--radius-4); background: var(--vr-violet-50); line-height: 16px; }
+.pc-bb--photo img { width: 12px; height: 12px; }
+
+/* «від 2 шт» */
+.pc-bulk {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--green-600);
+  font-size: var(--fs-caption-sm);
+  line-height: var(--lh-caption-sm);
+}
+.pc-bulk b { font-weight: var(--fw-semibold); }
+
+/* Інфо: термін уцінки або розтермінування */
+.pc-term {
+  padding: var(--space-4);
+  border-radius: var(--radius-4);
+  background: var(--brand-50);
+  color: var(--brand-700);
+  font-size: var(--fs-caption-xs);
+  line-height: 1;
+  font-weight: var(--fw-semibold);
+}
+.pc-installment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 2px 6px 2px var(--space-4);
+  border-radius: var(--radius-12);
+  background: var(--brand-50);
+  color: var(--black-72);
+  font-size: var(--fs-caption-xs);
+  line-height: 1;
+}
+.pc-installment img { width: 14px; height: 14px; }
+
+/* Nutri-Score */
+/* Офіційний горизонтальний модуль Nutri-Score: лише пропорційне масштабування, без змін.
+   26 px заввишки — однаковий у всіх карток; має читатися (хартія, с. 51). */
+.nutri-logo { flex: none; height: 26px; width: auto; }
+/* компактний (для порівняння, НЕ за хартією): без напису — той самий масштаб, що й офіційний 26 px */
+.pc-meta--compact .nutri-logo { height: 18px; }
+/* Nutri-Score окремим рядком одразу під назвою (Figma 8638:2923: 8 px під назвою), не відірваний від неї */
+.pc-meta { height: 26px; } /* висота модуля Nutri-Score */
+.pc-meta--compact { height: 18px; }
+.pc-meta--bottom { margin-top: var(--space-4); }
+
+/* Вага й назва: назва гумова, 2–4 рядки (кількість задає js/card.js); вільне місце лишається внизу картки */
+.pc-text { display: flex; flex-direction: column; gap: 2px; }
+.pc-weight { font-size: var(--fs-caption-sm); line-height: var(--lh-caption-sm); font-weight: var(--fw-semibold); }
+.pc-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  font-size: var(--fs-caption-sm);
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Карусель: картки 109 px, висота рівня B ---------- */
+.pc-carousel { gap: var(--space-8); align-items: stretch; }
+.pc-carousel .plp-card { flex: none; width: 109px; }
+
+/* ---------- «Як є»: стара поведінка — кожна картка своєї висоти ---------- */
+.pc-legacy { align-items: start; }
+.pc-carousel.pc-legacy { align-items: flex-start; }
+.pc-legacy .pc-name { flex: none; }
+
+/* ---------- Debug-оверлей (демо-сторінка) ---------- */
+.pc-debug {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  z-index: 2;
+  max-width: 72px;
+  padding: 2px var(--space-4);
+  border-radius: var(--radius-4);
+  background: rgba(19, 19, 30, 0.82);
+  color: var(--white);
+  font-size: 9px;
+  line-height: 11px;
+  pointer-events: none;
+}
+.pc-debug b { color: #ffd84d; }
+.pc-debug-on .pc-slot { outline: 1px dashed var(--red-500); outline-offset: -1px; }
+.pc-debug-on .pc-name { outline: 1px dashed var(--blue-500); outline-offset: -1px; }
+
+/* «Підсвітити, де щось не влізло» (демо): картки, у яких правила щось сховали */
+.pc-highlight-hidden .plp-card:not([data-hidden=""]) {
+  outline: 2px solid var(--red-500);
+  outline-offset: 3px;
+  border-radius: var(--radius-8);
+  background: rgba(255, 10, 59, 0.06);
+}

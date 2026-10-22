@@ -1,0 +1,99 @@
+/* =====================================================================
+   ДЕМО КАРТКИ ТОВАРУ (demo-card.html): панель керування й секції екрана
+   ===================================================================== */
+
+.demo-body { gap: var(--space-24); }
+
+/* ---------- Панель керування — поза телефоном ---------- */
+.demo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: 300px;
+  padding: var(--space-16);
+  border-radius: var(--radius-16);
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.12);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body-sm);
+}
+.demo-panel__title { font-size: var(--fs-subtitle-md); line-height: var(--lh-subtitle-md); font-weight: var(--fw-semibold); }
+.demo-panel__group { display: flex; flex-direction: column; gap: var(--space-6); }
+.demo-panel__label { color: var(--black-72); font-weight: var(--fw-semibold); }
+.demo-panel__rules-only.is-disabled { opacity: 0.4; pointer-events: none; }
+.demo-panel__hint { margin: calc(-1 * var(--space-8)) 0 0; color: var(--red-500); font-size: var(--fs-caption-sm); line-height: var(--lh-caption-sm); }
+.demo-panel__check { display: flex; align-items: center; gap: var(--space-8); font-weight: var(--fw-semibold); cursor: pointer; }
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-12);
+  background: var(--blue-100);
+}
+.segmented button {
+  flex: 1 0 auto;
+  min-height: 32px;
+  padding: 0 var(--space-12);
+  border-radius: var(--radius-8);
+  color: var(--blue-500);
+  font-weight: var(--fw-semibold);
+}
+.segmented button[aria-pressed="true"] { background: var(--blue-500); color: var(--white); }
+.segmented button:focus-visible { outline: 2px solid var(--blue-500); outline-offset: 2px; }
+
+/* ---------- Екран демо ---------- */
+#cardDemo { padding-bottom: var(--space-24); }
+.demo-heading {
+  padding: var(--space-16) var(--space-16) 0;
+  font-size: var(--fs-subtitle-md);
+  line-height: var(--lh-subtitle-md);
+  font-weight: var(--fw-semibold);
+}
+.demo-carousel { padding: var(--space-16); }
+
+/* ---------- Логіка відображення — справа від телефона ---------- */
+.demo-rules {
+  width: 340px;
+  max-height: var(--phone-h);
+  overflow-y: auto;
+  padding: var(--space-16) var(--space-16) var(--space-24);
+  border-radius: var(--radius-16);
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.12);
+  color: var(--text-primary);
+  font-size: var(--fs-caption-md);
+  line-height: var(--lh-caption-md);
+}
+.demo-rules__mode { margin: 0; color: var(--black-72); font-size: var(--fs-caption-sm); line-height: var(--lh-caption-sm); }
+/* пункт, що відрізняється від налаштувань за замовчуванням */
+.demo-rules li.is-changed { margin-left: calc(-1 * var(--space-4)); padding: 2px var(--space-4); border-radius: var(--radius-4); background: var(--brand-50); color: var(--text-primary); }
+.demo-rules__title { margin: 0 0 var(--space-4); font-size: var(--fs-subtitle-md); line-height: var(--lh-subtitle-md); font-weight: var(--fw-semibold); }
+.demo-rules section { padding-top: var(--space-12); }
+.demo-rules section + section { margin-top: var(--space-12); border-top: 1px solid var(--ink-12); }
+.demo-rules h3 { margin: 0 0 var(--space-6); font-size: var(--fs-body-sm); line-height: var(--lh-body-sm); font-weight: var(--fw-semibold); }
+.demo-rules ul,
+.demo-rules ol { margin: 0; padding-left: var(--space-16); display: flex; flex-direction: column; gap: var(--space-4); }
+.demo-rules li { color: var(--black-87); }
+.demo-rules b { font-weight: var(--fw-semibold); color: var(--text-primary); }
+.demo-rules code { font-family: inherit; font-weight: var(--fw-semibold); color: var(--text-primary); white-space: nowrap; }
+
+/* Середня ширина: телефон і логіка в ряд, панель над ними */
+@media (max-width: 1160px) {
+  .demo-body { flex-wrap: wrap; align-content: flex-start; }
+  .demo-panel { flex-basis: 100%; width: auto; max-width: calc(var(--phone-w) + 340px + var(--space-24)); }
+}
+/* Вузьке вікно: усе в стовпчик — панель, телефон, логіка */
+@media (max-width: 760px) {
+  .demo-body { flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; }
+  .demo-body > * { flex-shrink: 0; } /* у стовпчику телефон і логіка не стискаються — сторінка прокручується */
+  .demo-panel { flex-basis: auto; }
+  .demo-panel, .demo-rules { width: 100%; max-width: var(--phone-w); }
+  .demo-rules { max-height: none; }
+}
+@media (max-width: 440px) {
+  .demo-body { padding: 0; gap: 0; }
+  .demo-panel { max-width: none; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--ink-12); }
+  .demo-rules { max-width: none; border-radius: 0; box-shadow: none; border-top: 1px solid var(--ink-12); }
+}
