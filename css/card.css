@@ -117,10 +117,10 @@
 .nutri-logo { flex: none; height: 26px; width: auto; }
 /* компактний (для порівняння, НЕ за хартією): без напису — той самий масштаб, що й офіційний 26 px */
 .pc-meta--compact .nutri-logo { height: 18px; }
-/* Nutri-Score окремим рядком одразу під назвою (Figma 8638:2923: 8 px під назвою), не відірваний від неї */
+/* Nutri-Score окремим рядком одразу під назвою, не відірваний від неї: відступ 4 px — той самий, що в «Як є»,
+   щоб при перемиканні режимів модуль не стрибав */
 .pc-meta { height: 26px; } /* висота модуля Nutri-Score */
 .pc-meta--compact { height: 18px; }
-.pc-meta--bottom { margin-top: var(--space-4); }
 
 /* Вага й назва: назва гумова, 2–3 рядки (кількість задає js/card.js); вільне місце лишається внизу картки */
 .pc-text { display: flex; flex-direction: column; gap: 2px; }
