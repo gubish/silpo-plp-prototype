@@ -7,7 +7,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-16); /* фото → текст (Figma «sm») */
+  gap: var(--space-12); /* фото → текст (як у проді) */
   min-width: 0;
   cursor: pointer;
 }
@@ -85,13 +85,16 @@
 .plp-card.is-expected :is(.pc-img, .pc-bubbles, .like-btn, .pc-body > :not(.nutri-row)) { opacity: 0.6; }
 
 /* ---------- Текстова зона ---------- */
-.pc-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; color: var(--ink-100); }
+/* Розміри тексту — як у продакшен-застосунку (заміряно зі скріна iOS, 2026-10-23):
+   ціна 15/20, стара ціна 13, тег знижки й ББ 11, вага й назва 11 (рядок назви 14), між рядками 2 px */
+.pc-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; color: var(--ink-100); }
 .pc-price,
 .pc-slot { display: flex; align-items: center; gap: var(--space-4); flex: none; overflow: hidden; white-space: nowrap; }
 .pc-price { align-items: baseline; }
-.pc-price__now { flex: none; font-size: var(--fs-body-md); line-height: var(--lh-body-md); font-weight: var(--fw-bold); }
-.pc-body .price-old { flex: none; line-height: var(--lh-caption-sm); color: var(--ink-87); }
+.pc-price__now { flex: none; font-size: 15px; line-height: 20px; font-weight: var(--fw-bold); }
+.pc-body .price-old { flex: none; font-size: 13px; line-height: var(--lh-caption-sm); color: var(--ink-87); }
 .pc-body .discount-tag { flex: none; background: var(--brand-500); font-weight: var(--fw-semibold); }
+.plp-card .discount-tag { font-size: 11px; } /* і в рядку, і на фото — однаковий */
 
 /* ББ: чип у рядку бенефітів (Figma «bonus points») і бейдж на фото */
 .pc-bb {
@@ -103,7 +106,7 @@
   border-radius: 4px 24px 24px 4px;
   background: linear-gradient(to left, rgba(240, 232, 248, 0), var(--vr-violet-50));
   color: var(--vr-violet-700);
-  font-size: var(--fs-caption-sm);
+  font-size: 11px;
   line-height: var(--lh-caption-sm);
   font-weight: var(--fw-semibold);
 }
@@ -118,7 +121,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--green-600);
-  font-size: var(--fs-caption-sm);
+  font-size: 11px;
   line-height: var(--lh-caption-sm);
 }
 .pc-bulk b { font-weight: var(--fw-semibold); }
@@ -155,18 +158,19 @@
 /* Nutri-Score окремим рядком одразу під назвою, не відірваний від неї: відступ 4 px — той самий, що в «Як є»,
    щоб при перемиканні режимів модуль не стрибав */
 .pc-meta { height: 26px; } /* висота модуля Nutri-Score */
+.pc-text + .pc-meta { margin-top: var(--space-2); } /* разом із gap — 4 px від назви */
 .pc-meta--compact { height: 18px; }
 
 /* Вага й назва: назва гумова, 2–3 рядки (кількість задає js/card.js); вільне місце лишається внизу картки */
-.pc-text { display: flex; flex-direction: column; gap: 2px; }
-.pc-weight { font-size: var(--fs-caption-sm); line-height: var(--lh-caption-sm); font-weight: var(--fw-semibold); }
+.pc-text { display: flex; flex-direction: column; }
+.pc-weight { font-size: 11px; line-height: var(--lh-caption-sm); font-weight: var(--fw-semibold); }
 .pc-name {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   overflow: hidden;
-  font-size: var(--fs-caption-sm);
-  line-height: 16px;
+  font-size: 11px;
+  line-height: 14px; /* = Card.NAME_LINE */
   overflow-wrap: anywhere;
 }
 
