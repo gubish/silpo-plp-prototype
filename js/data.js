@@ -24,7 +24,7 @@ window.DATA = {
        • nutri — Nutri-Score: 'A' … 'E'.
        • expected — товар очікується (оверлей замість «+»).
        Nutri-Score — майже в усіх (щоб порівняти «у слоті» й «знизу»);
-       без нього лише iPhone, біле вино «тільки ББ» і фісташки (теги без Nutri-Score). */
+       без нього лише чайник і кавоварка Smeg, біле вино «тільки ББ» і фісташки (теги без Nutri-Score). */
     dMarshmallow: {
       name: 'Зефір «Біло-рожевий» з ванільним смаком у святковій подарунковій коробці',
       price: 89.90, weight: '250 г',
@@ -85,16 +85,16 @@ window.DATA = {
       bb: 12.21, markdown: { until: '01.09.26' }, nutri: 'C',
       image: 'assets/images/products/card/wine-red.png',
     },
-    dIphoneSale: {
-      name: 'Мобільний телефон Apple iPhone 18 Pro 2TB Burgundy', price: 157999, oldPrice: 179999, discount: 12, weight: '1 шт',
-      bb: 1580, // TBD: округлення великих сум ББ (+1 580 б чи +1.5к б)
+    dKettleSale: {
+      name: 'Електрочайник Smeg кремовий 1,7 л KLF04CREU', price: 10899, oldPrice: 12399, discount: 12, weight: '1 шт',
+      bb: 1580, // велика сума ББ навмисно — сценарій «+1 580» / «+1.5к». TBD: округлення великих сум ББ
       installment: { payments: 24 },
-      image: 'assets/images/products/card/iphone.png',
+      image: 'assets/images/products/card/kettle-smeg.webp',
     },
-    dIphone: {
-      name: 'Мобільний телефон Apple iPhone 18 Pro 1TB Burgundy', price: 149999, weight: '1 шт',
+    dCoffeeMaker: {
+      name: 'Кавоварка Smeg крапельна чорна DCF02BLEU', price: 10349, weight: '1 шт',
       installment: { payments: 24 },
-      image: 'assets/images/products/card/iphone.png',
+      image: 'assets/images/products/card/coffee-maker-smeg.webp',
     },
     dPineapple: {
       name: 'Ананас Голден Світ', price: 422.77, oldPrice: 526.90, discount: 30, weight: '1 шт',
@@ -145,20 +145,20 @@ window.DATA = {
 
   /* Демо-сторінка картки: які товари в лістингу й каруселі */
   cardDemo: {
-    title: 'Картка товару',
+    title: 'Продукти',
     listing: [
       { id: 'dMarshmallow' },
       { id: 'dCucumbers',  badges: ['percent'] },
       { id: 'dWineSale' },
       { id: 'dBananas' },
-      { id: 'dIphoneSale', badges: ['percent'] },
+      { id: 'dKettleSale', badges: ['percent'] },
       { id: 'dOliveOil' },
       { id: 'dMilk' },
       { id: 'dCoffee',     badges: ['bulk'] },
       { id: 'dPineapple',  badges: ['cinotyzhyky'] },
       { id: 'dWineRed',    badges: ['percent', 'klatsni'] },
       { id: 'dWineWhite' },
-      { id: 'dIphone' },
+      { id: 'dCoffeeMaker' },
       { id: 'dApplesSale', badges: ['madeInUa'] },
       { id: 'dMilkBb' },
       { id: 'dPistachios', liked: true },
@@ -172,7 +172,7 @@ window.DATA = {
       { id: 'dMilk' }, // уцінка — 5-та, за краєм екрана
       { id: 'dMarshmallow' },
       { id: 'dCoffee',     badges: ['bulk'] },
-      { id: 'dIphoneSale' },
+      { id: 'dKettleSale' },
     ],
   },
 

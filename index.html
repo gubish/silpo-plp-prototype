@@ -39,11 +39,19 @@
     </div>
 
     <div class="demo-panel__group demo-panel__rules-only is-disabled">
-      <span class="demo-panel__label">Попередня ціна</span>
-      <div class="segmented" role="group" aria-label="Де показувати попередню ціну">
-        <button type="button" data-setting="oldPricePlace" data-value="row" aria-pressed="true">Окремим рядком</button>
-        <button type="button" data-setting="oldPricePlace" data-value="inline" aria-pressed="false">Із поточною</button>
+      <span class="demo-panel__label">Розтермінування</span>
+      <div class="segmented" role="group" aria-label="Де показувати розтермінування">
+        <button type="button" data-setting="installmentPlace" data-value="row" aria-pressed="true">В рядку</button>
+        <button type="button" data-setting="installmentPlace" data-value="photo" aria-pressed="false">На фото</button>
       </div>
+      <!-- активний лише з «Розтермінування: В рядку»: «іконка x24» на плашці у своєму рядку -->
+      <label class="demo-panel__check demo-panel__sub">
+        <input class="switch" type="checkbox" data-installment-short> Коротке
+      </label>
+      <!-- активний лише з «Розтермінування: На фото» (js/screens/card-demo.js) -->
+      <label class="demo-panel__check demo-panel__sub is-disabled">
+        <input class="switch" type="checkbox" data-installment-round disabled> Круглий
+      </label>
     </div>
 
     <div class="demo-panel__group demo-panel__rules-only is-disabled">
@@ -63,19 +71,18 @@
       <div class="segmented" role="group" aria-label="Місце Nutri-Score">
         <button type="button" data-setting="nutriPlace" data-value="bottom" aria-pressed="true">Під назвою</button>
         <button type="button" data-setting="nutriPlace" data-value="slot" aria-pressed="false">У слоті «Мета»</button>
+        <button type="button" data-setting="nutriPlace" data-value="photo" aria-pressed="false">На фото</button>
+        <button type="button" data-setting="nutriPlace" data-value="weight" aria-pressed="false">Біля ваги</button>
       </div>
       <div class="segmented" role="group" aria-label="Вигляд Nutri-Score">
         <button type="button" data-setting="nutriStyle" data-value="official" aria-pressed="true">Офіційний</button>
         <button type="button" data-setting="nutriStyle" data-value="compact" aria-pressed="false">Компактний (не за хартією)</button>
+        <button type="button" data-setting="nutriStyle" data-value="minimal" aria-pressed="false">Мінімалістичний</button>
       </div>
     </div>
 
     <label class="demo-panel__check">
       <input class="switch" type="checkbox" data-round-bubbles checked> Круглі бейджі
-    </label>
-
-    <label class="demo-panel__check">
-      <input class="switch" type="checkbox" data-debug> Debug-оверлей
     </label>
 
     <label class="demo-panel__check">

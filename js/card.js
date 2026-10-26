@@ -3,44 +3,46 @@
    Бриф «Логіка відображення картки товару». Figma: 8602:18153.
    Усі правила словами й журнал рішень — docs/card-rules.md (міняєте правило — оновіть і його).
 
-   Під фото — фіксований порядок слотів:
-     1 Ціна (завжди перша) · 2 Бенефіти · 3 Інфо · 4 Мета · 5 Вага · 6 Назва
-   Слоти 2–4 — додаткові рядки, максимум Card.MAX_EXTRAS на картку;
-   зайві ховаються з кінця Card.PRIORITY. Порожній слот не рендериться.
-   Рівень картки: A — 0–1 додатковий рядок, B — 2.
+   Під фото: Ціна (завжди перша) · потік бейджів · Вага · Назва.
+   Потік бейджів — один, переноситься як текст, максимум Card.MAX_LINES рядки, порядок Card.FLOW:
+     стара ціна → знижка («від 2 шт») → термін уцінки → [Nutri-Score у слоті] → розтермінування → ББ.
+   Що не влізло в 2 рядки — ховаємо з кінця. Термін уцінки не ховається ніколи.
+   Рівень картки: A — 0–1 рядок потоку, B — 2.
    Nutri-Score — окремим рядком одразу під назвою (settings.nutriPlace = 'bottom'):
    він не рахується в ліміт і не відривається від назви. 'slot' — як у брифі, у слоті «Мета».
+   'photo' — на фото в лівому верхньому куті, першим над баблами (варіант): не займає рядків і не рахується в ліміт баблів.
+   'weight' — у рядку ваги (варіант): рядок останній, після назви; Nutri-Score ліворуч, вага одразу за ним.
    Висоту ряду вирівнює сітка (stretch); назва — максимум 3 рядки, за потреби 2; під короткою
    вільне місце лишається внизу картки, не між назвою й Nutri-Score.
 
    Card.html(item)        — розмітка картки (item з DATA: { id, badges, liked })
    Card.layout(container) — після рендеру: режим ББ, рівні рядів, рядки назви
-   Card.settings          — перемикачі демо-сторінки (правила, режим ББ, debug)
+   Card.settings          — перемикачі демо-сторінки (правила, режим ББ, підсвітка)
    ===================================================================== */
 
 const Card = {
   settings: {
     rules: true,        // true — «Нові правила»; false — «Як є» (стара картка), для порівняння
     bbMode: 'row',      // 'row' — чипом у рядку бенефітів (не влазить — бейджем на фото) | 'photo' — завжди бейджем на фото
-    nutriPlace: 'bottom', // 'bottom' — окремим рядком одразу під назвою | 'slot' — у слоті «Мета» (рахується в ліміт рядків)
-    oldPricePlace: 'row',    // 'row' — завжди окремим рядком | 'inline' — поруч із поточною (не влазить — окремим рядком)
+    nutriPlace: 'bottom', // 'bottom' — окремим рядком одразу під назвою | 'slot' — у слоті «Мета» (рахується в ліміт рядків) | 'photo' — на фото, першим у лівому верхньому куті | 'weight' — у рядку ваги після назви
     discountPlace: 'row',
     discountStyle: 'tag',
-    bbStyle: 'tag',       // ББ на фото: 'tag' — компактний прямокутний «ⓑ +12» | 'round' — круглий фіолетовий із сумою // знижка на фото: 'tag' — прямокутний тег −30% | 'round' — круглий бейдж як «%», але з величиною // 'row' — тег −30% у рядку бенефітів | 'photo' — лише бейджем −30% на фото (без дубля)
-    nutriStyle: 'official', // 'official' — модуль без змін | 'compact' — без напису й білої підкладки (НЕ за хартією, лише для порівняння)
-    debug: false,       // підпис рівня, рядків назви й схованого на кожній картці
+    installmentPlace: 'row', // 'row' — чипом «x24 платежі» у слоті «Інфо» | 'photo' — компактним бейджем «x24» на фото
+    installmentShort: false, // true — розтермінування в рядку «Інфо» коротко: «іконка x24» на тій самій плашці
+    installmentStyle: 'tag', // розтермінування на фото: 'tag' — прямокутний | 'round' — круглий 32 px (іконка над «x24»)
+    bbStyle: 'tag',       // ББ на фото: 'tag' — компактний прямокутний «ⓑ +12» | 'round' — круглий із сумою, у кольорах прямокутного // знижка на фото: 'tag' — прямокутний тег −30% | 'round' — круглий бейдж як «%», але з величиною // 'row' — тег −30% у рядку бенефітів | 'photo' — лише бейджем −30% на фото (без дубля)
+    nutriStyle: 'official', // 'official' — модуль без змін | 'compact' — без напису й білої підкладки | 'minimal' — підпис «Nutri-Score» + літера в квадратику (обидва НЕ за хартією, лише для порівняння)
     highlightHidden: false, // підсвітити картки, де щось не влізло (data-hidden не порожній)
     roundBubbles: true, // false — круглі бейджі на фото не показуємо: «Я ще ОК», промо, «б» ББ, а також знижку й ББ у круглому вигляді
   },
 
-  MAX_EXTRAS: 2,
+  MAX_LINES: 2,
   MAX_BUBBLES: 2,
-  /** Важливість додаткових рядків: що в кінці — ховається першим.
-      Термін уцінки — завжди перший: він юридично обовʼязковий і не ховається ні за яких умов.
-      Окремий рядок ББ — найслабший: не влазить у ліміт — ББ просто не показуємо (ні в рядку, ні на фото). */
-  PRIORITY: ['markdown', 'benefits', 'meta', 'installment', 'bbLine'],
+  /** Порядок потоку бейджів під ціною: що в кінці — ховається першим, коли не влазить у 2 рядки.
+      Термін уцінки юридично обовʼязковий — не ховається ні за яких умов. Nutri-Score у слоті займає цілий рядок. */
+  FLOW: ['old', 'discount', 'bulk', 'markdown', 'meta', 'installment', 'bb'],
   NAMES: {
-    benefits: 'Бенефіти', bbLine: 'ББ окремим рядком', markdown: 'Термін', meta: 'Nutri-Score', installment: 'Розтермінування',
+    old: 'попередня ціна', discount: 'знижка', markdown: 'Термін', meta: 'Nutri-Score', installment: 'Розтермінування',
     bulk: '«від 2 шт»', bubble: 'бабл', bb: 'сума ББ',
   },
   // рядків назви = база − додаткові рядки картки, у межах 2–3: 0–1 доп. → 3 рядки, 2 доп. → 2
@@ -75,122 +77,113 @@ const Card = {
   },
 
   /* ---------------- Що показати ----------------
-     variant: { oldInline — стара ціна в рядку ціни, bbOnPhoto — ББ бейджем на фото,
-                bbLine — чип ББ окремим рядком під знижкою (не влазить з нею в один) } */
-  plan(item, variant) {
+     cut — скільки елементів потоку показати (решта не влізла в 2 рядки; міряє Card.fit) */
+  plan(item, cut = Infinity) {
     const p = DATA.products[item.id];
     let bb = this.bbOf(p);
     const sale = !!p.oldPrice;
     const hidden = [];
+    const installment = this.installmentOf(p);
 
     // «Від 2 шт» — окремий тип цінової деталі; зі знижкою показуємо знижку (TBD)
     const bulk = p.bulk && !sale ? p.bulk : null;
     if (p.bulk && sale) hidden.push(this.NAMES.bulk);
-    // Сума ББ — лише в одному місці: чипом у рядку бенефітів або бейджем на фото (режим ББ).
-    const bbOnPhoto = !!bb && variant.bbOnPhoto;
-    // Знижка на фото: тег −30% переїжджає на фото, у рядку бенефітів лишається хіба стара ціна (коли не влазить поруч)
+    // Сума ББ — лише в одному місці: чипом у потоці або бейджем на фото (режим ББ).
+    const bbOnPhoto = !!bb && this.settings.bbMode === 'photo';
+    // Знижка на фото: тег −30% переїжджає на фото, у потоці лишається стара ціна
     const discountOnPhoto = sale && this.settings.discountPlace === 'photo';
-    const oldInline = sale && variant.oldInline;
-    // Головний рядок бенефітів: стара ціна (коли не поруч із поточною) + знижка, або «від 2 шт»
-    const mainBenefits = (sale && (!discountOnPhoto || !oldInline)) || !!bulk;
-    // ББ в рядку не влазить поруч зі знижкою — переноситься на свій рядок (найслабший додатковий рядок, див. PRIORITY).
-    const bbLine = !!bb && !bbOnPhoto && mainBenefits && !!variant.bbLine;
+    // Термін уцінки й розтермінування разом не показуємо — термін важливіший (і коли розтермінування на фото)
+    if (p.markdown && installment) hidden.push(this.NAMES.installment);
+    const installmentOn = !!installment && !p.markdown;
+    // Розтермінування на фото — компактний бейдж «x24», у потоці його немає
+    const installmentOnPhoto = installmentOn && this.settings.installmentPlace === 'photo';
 
+    // Потік бейджів під ціною, у порядку Card.FLOW
     const has = {
-      benefits: mainBenefits || (!!bb && !bbOnPhoto),
-      bbLine,
+      old: sale,
+      discount: sale && !discountOnPhoto,
+      bulk: !!bulk,
       markdown: !!p.markdown,
-      // Nutri-Score унизу — окремий рядок поза лімітом додаткових
-      meta: this.settings.nutriPlace === 'slot' && !!p.nutri,
-      installment: !!this.installmentOf(p),
+      meta: this.settings.nutriPlace === 'slot' && !!p.nutri, // Nutri-Score у слоті — цілим рядком
+      installment: installmentOn && !installmentOnPhoto,
+      bb: !!bb && !bbOnPhoto,
     };
-    // Термін уцінки й розтермінування — один слот «Інфо», термін важливіший
-    if (has.markdown && has.installment) { has.installment = false; hidden.push(this.NAMES.installment); }
-
-    const candidates = this.PRIORITY.filter(k => has[k]);
-    const extras = candidates.slice(0, this.MAX_EXTRAS);
-    candidates.slice(this.MAX_EXTRAS).forEach(k => hidden.push(this.NAMES[k === 'bbLine' ? 'bb' : k]));
-    // окремому рядку ББ не лишилось місця (термін уцінки, розтермінування…) — суму ББ не показуємо,
-    // а фіолетовий бабл «б» лишається кандидатом на фото (найслабший серед баблів)
-    const bbChipDropped = has.bbLine && !extras.includes('bbLine');
+    const flow = this.FLOW.filter(k => has[k]);
+    const flowShown = flow.filter((k, i) => i < cut || k === 'markdown'); // термін не ховається ніколи
+    flow.filter(k => !flowShown.includes(k)).forEach(k => hidden.push(this.NAMES[k]));
+    // сума ББ не влізла в потік — не показуємо її, а фіолетовий бабл «б» лишається кандидатом на фото (найслабший серед баблів)
+    const bbChipDropped = has.bb && !flowShown.includes('bb');
     if (bbChipDropped) bb = 0;
 
     // Бабли на фото: «Я ще ОК» (найсильніший) → знижка (коли вона на фото) → промо → ББ, максимум 2.
     // Промо можуть витіснити ББ. ББ на фото — бейдж із сумою; ББ чипом у рядку — на фото фіолетовий бабл «б»
     // без суми (сума лишається в рядку). Знижка на фото замінює загальний бабл «%» — інакше той самий сенс двічі.
-    // Знижка й ББ обидві на фото (прямокутні бейджі) → інший ліміт: 1 круглий бабл + обидва прямокутні,
-    // щоб на фото були і знижка, і ББ. Круглий — «Я ще ОК», інакше перше промо.
+    // Знижка й розтермінування на фото — сильні прямокутні бейджі (одразу після «Я ще ОК»). Кожен наступний прямокутний
+    // додає місце: знижка + розтермінування → до 3 бейджів. Сильний прямокутний разом із ББ на фото → інший ліміт:
+    // 1 круглий бабл + усі прямокутні, щоб на фото були і знижка / розтермінування, і ББ. Круглий — «Я ще ОК», інакше перше промо.
     const round = [];
     if (p.markdown) round.push({ image: DATA.card.markdownBubble });
     (item.badges || []).filter(b => !(discountOnPhoto && b === 'percent'))
       .forEach(b => round.push({ image: DATA.badges[b] }));
+    const strong = [];
+    if (discountOnPhoto) strong.push({ discount: p.discount });
+    if (installmentOnPhoto) strong.push({ installment: installment.payments });
     let bubbles, shown;
-    if (discountOnPhoto && bb && bbOnPhoto) {
-      const rect = [{ discount: p.discount }, { bb }];
+    if (strong.length && bb && bbOnPhoto) {
+      const rect = [...strong, { bb }];
       bubbles = [...round, ...rect];
       shown = [...round.slice(0, 1), ...rect];
     } else {
-      bubbles = [...round.slice(0, p.markdown ? 1 : 0)];
-      if (discountOnPhoto) bubbles.push({ discount: p.discount });
-      bubbles.push(...round.slice(p.markdown ? 1 : 0));
+      bubbles = [...round.slice(0, p.markdown ? 1 : 0), ...strong, ...round.slice(p.markdown ? 1 : 0)];
       if (bb) bubbles.push(bbOnPhoto ? { bb } : { image: DATA.card.bbBubble });
       else if (bbChipDropped) bubbles.push({ image: DATA.card.bbBubble });
-      shown = bubbles.slice(0, this.MAX_BUBBLES);
+      shown = bubbles.slice(0, this.MAX_BUBBLES + Math.max(0, strong.length - 1));
     }
+    // круглих на фото — не більше 2 (зокрема знижка й ББ у круглому вигляді): третій круглий ховаємо, найслабший — ББ
+    let roundCount = 0;
+    shown = shown.filter(b => !this.isRound(b) || ++roundCount <= this.MAX_BUBBLES);
     // круглі бейджі вимкнені — їх не показуємо взагалі, тож і «не влізло» про них не пишемо
     bubbles.filter(b => !shown.includes(b) && (this.settings.roundBubbles || !this.isRound(b))).forEach(b => hidden.push(this.NAMES.bubble + ' «'
-      + (b.image ? b.image.alt : b.discount ? '−' + b.discount + '%' : 'ББ') + '»'));
+      + (b.image ? b.image.alt : b.discount ? '−' + b.discount + '%' : b.installment ? 'x' + b.installment : 'ББ') + '»'));
 
     return {
-      p, bb, sale, bulk, bbOnPhoto, discountOnPhoto, hidden, oldInline, bbLine,
-      show: Object.fromEntries(extras.map(k => [k, true])),
-      extras: extras.length,
-      level: extras.length >= 2 ? 'B' : 'A',
-      // порядок на фото: круглі бабли (зокрема «б» ББ) завжди перші, далі знижка, далі бейдж ББ із сумою
+      p, bb, bulk, hidden, flow: flowShown,
+      // порядок на фото: круглі бабли (зокрема «б» ББ) завжди перші, далі знижка, розтермінування, бейдж ББ із сумою
       bubbles: shown.sort((a, b) => this.bubbleOrder(a) - this.bubbleOrder(b)),
     };
   },
 
   /** Знижка на фото кругла, лише коли круглі бейджі ввімкнені; вимкнені — стає прямокутним тегом, а не зникає */
   discountRound() { return this.settings.discountStyle === 'round' && this.settings.roundBubbles; },
+  /** Так само ББ із сумою: вимкнені круглі бейджі — стає прямокутним, а не зникає */
+  bbRound() { return this.settings.bbStyle === 'round' && this.settings.roundBubbles; },
+  /** І розтермінування на фото */
+  installmentRound() { return this.settings.installmentStyle === 'round' && this.settings.roundBubbles; },
 
-  /** Круглий бейдж: усі бабли-картинки, а також знижка й ББ, якщо вони в круглому вигляді */
+  /** Круглий бейдж: усі бабли-картинки, а також знижка, розтермінування й ББ, якщо вони в круглому вигляді */
   isRound(b) {
     if (b.discount) return this.discountRound();
-    if (b.bb) return this.settings.bbStyle === 'round';
+    if (b.installment) return this.installmentRound();
+    if (b.bb) return this.bbRound();
     return !!b.image;
   },
 
-  /** Порядок на фото: 0 — група круглих (і фіолетовий «б» ББ, хоч він і не круглий), 1 — знижка, 2 — бейдж ББ із сумою */
+  /** Порядок на фото: 0 — група круглих (і фіолетовий «б» ББ, хоч він і не круглий), 1 — знижка, 2 — розтермінування,
+      3 — бейдж ББ із сумою */
   bubbleOrder(b) {
     if (b.discount) return 1;
-    if (b.bb) return 2;
+    if (b.installment) return 2;
+    if (b.bb) return 3;
     return 0;
-  },
-
-  /** Варіанти розкладки цін і ББ — від «влазить» до «не влазить» */
-  variants() {
-    // Попередня ціна «Окремим рядком» — поруч із поточною її не ставимо взагалі.
-    // ББ в рядку ніколи не йде на фото: не влазить поруч зі знижкою — переноситься на свій рядок.
-    // Перебираємо від найкомпактнішого: стара ціна поруч → ББ окремим рядком → стара ціна вниз → обидва.
-    const inline = this.settings.oldPricePlace === 'inline';
-    const bbOnPhoto = this.settings.bbMode === 'photo';
-    if (bbOnPhoto) return [{ oldInline: inline, bbOnPhoto }, { oldInline: false, bbOnPhoto }];
-    return [
-      { oldInline: inline, bbOnPhoto, bbLine: false },
-      { oldInline: inline, bbOnPhoto, bbLine: true },
-      { oldInline: false, bbOnPhoto, bbLine: false },
-      { oldInline: false, bbOnPhoto, bbLine: true },
-    ];
   },
 
   /* ---------------- Дрібні елементи ---------------- */
   bbChip(bb, onPhoto) {
     const coin = '<img src="assets/icons/card/vr-coin-14.svg" alt="балів">';
-    // на фото круглий: фіолетове коло 32 px із короткою сумою (довга сума — дрібніше, щоб влізла)
-    if (onPhoto && this.settings.bbStyle === 'round') {
+    // на фото круглий: коло 32 px у кольорах прямокутного бейджа, монетка над короткою сумою (довга сума — дрібніше, щоб влізла)
+    if (onPhoto && this.bbRound()) {
       const short = this.bbShort(bb);
-      return `<span class="pc-bb-round ${short.length > 4 ? 'pc-bb-round--long' : ''}" title="${this.bbText(bb)} балів" aria-label="${this.bbText(bb)} балів">${short}</span>`;
+      return `<span class="pc-bb-round ${short.length > 4 ? 'pc-bb-round--long' : ''}" title="${this.bbText(bb)} балів" aria-label="${this.bbText(bb)} балів">${coin}${short}</span>`;
     }
     // на фото — компактний бейдж розміром із тег знижки, сума скорочена (точна — у підказці)
     return onPhoto
@@ -206,17 +199,30 @@ const Card = {
   installment(p) {
     return `<span class="pc-installment"><img src="assets/icons/card/installment.svg" alt="">${this.fill(DATA.card.installmentText, this.installmentOf(p))}</span>`;
   },
+  /** Коротко — іконка й «x24» на тій самій плашці (повний текст — у підказці), у рядку «Інфо» */
+  installmentShort(p) {
+    const I = this.installmentOf(p);
+    return `<span class="pc-installment pc-installment--short" title="${this.fill(DATA.card.installmentText, I)}"><img src="assets/icons/card/installment.svg" alt="">x${I.payments}</span>`;
+  },
   /** Nutri-Score: офіційний горизонтальний модуль без змін (графічна хартія, docs/card-rules.md п. 7).
       Велнес-теги в картці лістингу не показуємо (правило — docs/card-rules.md п. 7). */
   meta(p, extraClass = '') {
-    const compact = this.settings.rules && this.settings.nutriStyle === 'compact'; // «Як є» — завжди офіційний
-    const src = this.fill(compact ? DATA.card.nutriLogoCompact : DATA.card.nutriLogo, { grade: p.nutri.toLowerCase() });
-    return `<div class="pc-slot pc-meta ${compact ? 'pc-meta--compact' : ''} ${extraClass}" data-slot="meta">
-      <img class="nutri-logo" src="${src}" alt="Nutri-Score ${p.nutri}">
+    const style = this.settings.rules ? this.settings.nutriStyle : 'official'; // «Як є» — завжди офіційний
+    const grade = p.nutri.toLowerCase();
+    // мінімалістичний (Figma 8638:2887): підпис «Nutri-Score» і літера оцінки в кольоровому квадратику
+    const body = style === 'minimal'
+      ? `<span class="nutri-mini" aria-label="Nutri-Score ${p.nutri}">Nutri-Score<b class="nutri-mini__grade nutri-mini__grade--${grade}">${p.nutri}</b></span>`
+      : `<img class="nutri-logo" src="${this.fill(style === 'compact' ? DATA.card.nutriLogoCompact : DATA.card.nutriLogo, { grade })}" alt="Nutri-Score ${p.nutri}">`;
+    return `<div class="pc-slot pc-meta ${style !== 'official' ? 'pc-meta--' + style : ''} ${extraClass}" data-slot="meta">
+      ${body}
     </div>`;
   },
   bubble(b) {
     if (b.bb) return this.bbChip(b.bb, true);
+    // розтермінування на фото — компактно: іконка й «x24» (повний текст — у підказці); кругле — іконка над «x24»
+    if (b.installment) {
+      return `<span class="pc-installment ${this.installmentRound() ? 'pc-installment-round' : 'pc-installment--photo'}" title="${this.fill(DATA.card.installmentText, { payments: b.installment })}"><img src="assets/icons/card/installment.svg" alt="">x${b.installment}</span>`;
+    }
     if (b.discount) {
       return this.discountRound()
         ? `<span class="pc-discount-round" aria-label="Знижка ${b.discount}%">−${b.discount}<small>%</small></span>`
@@ -224,54 +230,60 @@ const Card = {
     }
     return `<img src="${b.image.image}" alt="${b.image.alt}">`;
   },
-  media(item, p, bubbles) {
+  /** nutri — Nutri-Score на фото (nutriPlace = 'photo'): першим у стовпчику баблів */
+  media(item, p, bubbles, nutri = '') {
     return `
       <div class="pc-media">
         <img class="pc-img" src="${p.image}" alt="${p.name}">
-        <div class="pc-bubbles">${bubbles.filter(b => this.settings.roundBubbles || !this.isRound(b)).map(b => this.bubble(b)).join('')}</div>
+        <div class="pc-bubbles">${nutri}${bubbles.filter(b => this.settings.roundBubbles || !this.isRound(b)).map(b => this.bubble(b)).join('')}</div>
         ${UI.likeButton(item.liked)}
         ${p.expected ? `<span class="pc-expected">${DATA.card.expected}</span>` : UI.qtyControl(item.id)}
-        <span class="pc-debug" hidden></span>
       </div>`;
   },
 
   /** Налаштування, від яких залежить розмітка: змінились — картку перемальовуємо */
-  mode() { return [this.settings.bbStyle, this.settings.discountStyle, this.settings.roundBubbles, this.settings.bbMode, this.settings.oldPricePlace, this.settings.discountPlace, this.settings.nutriPlace, this.settings.nutriStyle].join('/'); },
+  mode() { return [this.settings.bbStyle, this.settings.discountStyle, this.settings.roundBubbles, this.settings.bbMode, this.settings.discountPlace, this.settings.installmentPlace, this.settings.installmentShort, this.settings.installmentStyle, this.settings.nutriPlace, this.settings.nutriStyle].join('/'); },
 
   /* ---------------- Розмітка ---------------- */
-  html(item, variantIndex = 0) {
+  html(item, cut = Infinity) {
     const p = DATA.products[item.id];
     const attrs = `class="plp-card ${this.settings.rules ? 'plp-card--rules' : ''} ${p.expected ? 'is-expected' : ''}" data-go="pdp" data-param="${item.id}"
       data-name="${p.name.toLocaleLowerCase('uk-UA')}" data-sale="${p.oldPrice ? 'true' : 'false'}"
-      data-tag="${item.tag || p.tag || ''}" data-tags="${(p.tags || []).join(' ')}" data-item='${JSON.stringify(item)}' data-variant="${variantIndex}" data-mode="${this.mode()}"`;
+      data-tag="${item.tag || p.tag || ''}" data-tags="${(p.tags || []).join(' ')}" data-item='${JSON.stringify(item)}' data-cut="${cut}" data-mode="${this.mode()}"`;
     return this.settings.rules
-      ? this.htmlRules(item, p, attrs, this.variants()[variantIndex])
+      ? this.htmlRules(item, p, attrs, cut)
       : this.htmlLegacy(item, p, attrs);
   },
 
-  htmlRules(item, p, attrs, variant) {
-    const pl = this.plan(item, variant);
-    const main = pl.sale
-      ? `${pl.oldInline ? '' : this.oldPrice(p)}${pl.discountOnPhoto ? '' : this.discountTag(p)}`
-      : pl.bulk ? this.bulkText(pl.bulk) : '';
-    const chip = pl.bb && !pl.bbOnPhoto ? this.bbChip(pl.bb) : '';
-    const benefits = pl.bbLine ? main : main + chip;
-    const info = pl.show.markdown ? this.markdown(p) : pl.show.installment ? this.installment(p) : '';
+  htmlRules(item, p, attrs, cut) {
+    const pl = this.plan(item, cut);
+    // Nutri-Score «біля ваги»: рядок ваги — останній, після назви (у всіх карток, щоб вага стояла однаково)
+    const weightRow = this.settings.nutriPlace === 'weight';
+    // Nutri-Score у слоті «Мета»: назва перед вагою
+    const nameFirst = this.settings.nutriPlace === 'slot';
+    const el = {
+      old: () => this.oldPrice(p),
+      discount: () => this.discountTag(p),
+      bulk: () => this.bulkText(pl.bulk),
+      markdown: () => this.markdown(p),
+      meta: () => this.meta(p, 'pc-meta--flow'),
+      installment: () => (this.settings.installmentShort ? this.installmentShort(p) : this.installment(p)),
+      bb: () => this.bbChip(pl.bb),
+    };
     return `
-      <article ${attrs} data-level="${pl.level}" data-extras="${pl.extras}" data-hidden="${pl.hidden.join(', ')}">
-        ${this.media(item, p, pl.bubbles)}
+      <article ${attrs} data-level="A" data-extras="0" data-hidden="${pl.hidden.join(', ')}">
+        ${this.media(item, p, pl.bubbles, this.settings.nutriPlace === 'photo' && p.nutri ? this.meta(p, 'pc-meta--photo') : '')}
         <div class="pc-body">
           <div class="pc-price" data-slot="price">
-            <span class="pc-price__now">${this.money(p.price)}</span>${pl.oldInline ? this.oldPrice(p) : ''}
+            <span class="pc-price__now">${this.money(p.price)}</span>
           </div>
-          ${pl.show.benefits ? `<div class="pc-slot pc-benefits" data-slot="benefits">${benefits}</div>` : ''}
-          ${pl.show.bbLine ? `<div class="pc-slot pc-benefits" data-slot="bb">${chip}</div>` : ''}
-          ${info ? `<div class="pc-slot pc-info" data-slot="info">${info}</div>` : ''}
-          ${pl.show.meta ? this.meta(p) : ''}
+          ${pl.flow.length ? `<div class="pc-flow" data-slot="flow">${pl.flow.map(k => el[k]()).join('')}</div>` : ''}
           <div class="pc-text">
-            <p class="pc-weight">${p.weight}</p>
+            ${weightRow || nameFirst ? '' : `<p class="pc-weight">${p.weight}</p>`}
             <p class="pc-name">${p.name}</p>
+            ${nameFirst ? `<p class="pc-weight">${p.weight}</p>` : ''}
           </div>
+          ${weightRow ? `<div class="pc-weight-row">${p.nutri ? this.meta(p, 'pc-meta--weight') : ''}<p class="pc-weight">${p.weight}</p></div>` : ''}
           ${this.settings.nutriPlace === 'bottom' && p.nutri ? this.meta(p, 'pc-meta--bottom nutri-row') : ''}
         </div>
       </article>`;
@@ -312,28 +324,44 @@ const Card = {
   },
 
   /* ---------------- Підгонка після рендеру ---------------- */
-  /** Перемальовує картку в іншому варіанті, зберігаючи видимість (фільтри лістингу) */
-  replace(card, variantIndex) {
+  /** Перемальовує картку з іншим обрізанням потоку, зберігаючи видимість (фільтри лістингу) */
+  replace(card, cut = Infinity) {
     const tpl = document.createElement('template');
-    tpl.innerHTML = this.html(JSON.parse(card.dataset.item), variantIndex).trim();
+    tpl.innerHTML = this.html(JSON.parse(card.dataset.item), cut).trim();
     const next = tpl.content.firstElementChild;
     next.hidden = card.hidden;
     card.replaceWith(next);
     return next;
   },
 
-  overflows(el) { return el.scrollWidth > el.clientWidth + 0.5; },
-
-  /** Режим ББ: «влазить» (стара ціна поруч, ББ чипом) або «не влазить» (стара ціна вниз, ББ на фото) */
+  /** Потік бейджів: малюємо все, міряємо рядки; що опинилося в 3-му рядку й далі — ховаємо (з кінця потоку).
+      Кількість рядків потоку — додаткові рядки картки (рівень A / B) */
   fit(card) {
-    const variants = this.variants();
-    if (card.dataset.variant !== '0' || card.dataset.mode !== this.mode()) card = this.replace(card, 0);
-    for (let i = 1; i < variants.length; i++) {
-      const rows = [...card.querySelectorAll('.pc-price, .pc-benefits')];
-      if (!rows.some(r => this.overflows(r))) break;
-      card = this.replace(card, i);
+    if (card.dataset.cut !== 'Infinity' || card.dataset.mode !== this.mode()) card = this.replace(card);
+    let lines = this.flowLines(card);
+    const cut = lines.findIndex(line => line >= this.MAX_LINES);
+    if (cut >= 0) {
+      card = this.replace(card, cut);
+      lines = this.flowLines(card);
     }
+    const count = lines.length ? Math.max(...lines) + 1 : 0;
+    card.dataset.extras = count;
+    card.dataset.level = count >= 2 ? 'B' : 'A';
     return card;
+  },
+
+  /** Номер рядка (з 0) для кожного елемента потоку: новий рядок — коли елемент нижче за попередній рядок */
+  flowLines(card) {
+    const flow = card.querySelector('.pc-flow');
+    if (!flow) return [];
+    let line = -1;
+    let bottom = -Infinity;
+    return [...flow.children].map(el => {
+      const top = el.offsetTop;
+      if (top >= bottom - 0.5) { line++; bottom = top + el.offsetHeight; }
+      else bottom = Math.max(bottom, top + el.offsetHeight);
+      return line;
+    });
   },
 
   /** Картки, згруповані в ряди сітки (за вертикальною позицією) */
@@ -360,13 +388,12 @@ const Card = {
     if (!container) return;
     if (!this.containers.has(container)) this.watch(container, carousel);
     container.classList.toggle('pc-legacy', !this.settings.rules);
-    container.classList.toggle('pc-debug-on', this.settings.debug);
     container.classList.toggle('pc-highlight-hidden', this.settings.highlightHidden);
 
     let cards = [...container.querySelectorAll('.plp-card')];
     // правила ввімкнули/вимкнули — перемальовуємо в потрібному вигляді
     cards = cards.map(c => (c.classList.contains('plp-card--rules') === this.settings.rules && c.dataset.mode === this.mode()
-      ? c : this.replace(c, 0)));
+      ? c : this.replace(c)));
     const visible = cards.filter(c => !c.hidden);
 
     if (this.settings.rules) {
@@ -405,25 +432,10 @@ const Card = {
       });
     }
     visible.forEach(c => {
-      this.debug(c);
       // підказка при наведенні: що саме не влізло
       c.title = this.settings.highlightHidden && c.dataset.hidden ? 'Не влізло: ' + c.dataset.hidden : '';
     });
     if (typeof Cart !== 'undefined') Cart.render(); // степери «− N шт +» у перемальованих картках
-  },
-
-  debug(card) {
-    const el = card.querySelector('.pc-debug');
-    el.hidden = !this.settings.debug;
-    if (!this.settings.debug) return;
-    const name = card.querySelector('.pc-name');
-    const lines = name.style.webkitLineClamp || 3;
-    const hidden = card.dataset.hidden;
-    el.innerHTML = this.settings.rules
-      ? `<b>${card.dataset.level}</b> · доп ${card.dataset.extras} · назва ${lines}р`
-        + (card.dataset.rowLevel !== card.dataset.level ? `<br>ряд ${card.dataset.rowLevel}` : '')
-        + (hidden ? `<br>сховано: ${hidden}` : '')
-      : `без правил · доп ${card.dataset.extras}`;
   },
 
   watch(container, carousel) {

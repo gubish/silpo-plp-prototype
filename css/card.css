@@ -30,7 +30,8 @@
 .pc-bubbles > img { width: 32px; height: 32px; }
 /* прямокутні бейджі на фото (тег знижки, ББ із сумою) оптично висунуті трохи лівіше за край картки */
 .pc-bubbles > .pc-discount-photo,
-.pc-bubbles > .pc-bb--photo { margin-left: -4px; }
+.pc-bubbles > .pc-bb--photo,
+.pc-bubbles > .pc-installment--photo { margin-left: -4px; }
 /* знижка бейджем на фото (режим «Знижка на фото») — той самий тег −30%, що й у рядку, такого ж розміру */
 .pc-discount-photo { background: var(--brand-500); font-weight: var(--fw-semibold); }
 /* знижка на фото круглим бейджем — як бабл «%» (32 px, той самий колір), але з величиною знижки */
@@ -49,22 +50,25 @@
   letter-spacing: -0.4px;
 }
 .pc-discount-round small { font-size: 9px; font-weight: var(--fw-bold); }
-/* ББ на фото круглим бейджем — фіолетове коло 32 px із сумою (колір монетки «Власного Рахунку») */
+/* ББ на фото круглим бейджем — коло 32 px у кольорах прямокутного бейджа ББ (світле тло, фіолетовий текст):
+   монетка над сумою — так обидві влазять у коло */
 .pc-bb-round {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--violet-600);
-  color: var(--white);
-  font-size: 12px;
+  background: var(--vr-violet-50);
+  color: var(--vr-violet-700);
+  font-size: 11px;
   line-height: 1;
   font-weight: var(--fw-bold);
   letter-spacing: -0.4px;
 }
-.pc-bb-round--long { font-size: 10px; letter-spacing: -0.5px; }
+.pc-bb-round img { width: 10px; height: 10px; margin-bottom: 1px; }
+.pc-bb-round--long { font-size: 9px; letter-spacing: -0.5px; }
 .pc-expected {
   position: absolute;
   left: 0;
@@ -81,8 +85,8 @@
   line-height: var(--lh-body-sm);
   font-weight: var(--fw-semibold);
 }
-/* модуль Nutri-Score не приглушуємо: кольори логотипа змінювати не можна (хартія, с. 6) */
-.plp-card.is-expected :is(.pc-img, .pc-bubbles, .like-btn, .pc-body > :not(.nutri-row)) { opacity: 0.6; }
+/* товар очікується: фото, бабли, «обране» і весь текст, разом із Nutri-Score, — на 60% */
+.plp-card.is-expected :is(.pc-img, .pc-bubbles, .like-btn, .pc-body) { opacity: 0.6; }
 
 /* ---------- Текстова зона ---------- */
 /* Розміри тексту — як у продакшен-застосунку (заміряно зі скріна iOS, 2026-10-23):
@@ -90,6 +94,11 @@
 .pc-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; color: var(--ink-100); }
 .pc-price,
 .pc-slot { display: flex; align-items: center; gap: var(--space-4); flex: none; overflow: hidden; white-space: nowrap; }
+/* Потік бейджів під ціною: стара ціна → знижка → термін → розтермінування → ББ, переноситься як текст,
+   максимум 2 рядки (що не влізло — ховає js/card.js). Nutri-Score у слоті — цілим рядком */
+.pc-flow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); min-width: 0; }
+.pc-flow > * { flex: none; max-width: 100%; white-space: nowrap; }
+.pc-flow > .pc-meta--flow { flex-basis: 100%; }
 .pc-price { align-items: baseline; }
 .pc-price__now { flex: none; font-size: 15px; line-height: 20px; font-weight: var(--fw-bold); }
 .pc-body .price-old { flex: none; font-size: 13px; line-height: var(--lh-caption-sm); color: var(--ink-87); }
@@ -148,6 +157,31 @@
   line-height: 1;
 }
 .pc-installment img { width: 14px; height: 14px; }
+/* коротке розтермінування в рядку «Інфо» — «іконка x24» на тій самій плашці, що й повне */
+/* розтермінування на фото — компактний прямокутний бейдж розміром із тег знижки (16 px): іконка 12 px і «x24» */
+.pc-installment--photo {
+  gap: 2px;
+  padding: 0 4px 0 2px;
+  border-radius: var(--radius-4);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: var(--fw-semibold);
+}
+.pc-installment--photo img { width: 12px; height: 12px; }
+/* розтермінування на фото круглим бейджем — коло 32 px у кольорах прямокутного, іконка над «x24» (як круглий ББ) */
+.pc-installment-round {
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.4px;
+}
+.pc-installment-round img { width: 12px; height: 12px; }
 
 /* Nutri-Score */
 /* Офіційний горизонтальний модуль Nutri-Score: лише пропорційне масштабування, без змін.
@@ -160,9 +194,27 @@
 .pc-meta { height: 26px; } /* висота модуля Nutri-Score */
 .pc-text + .pc-meta { margin-top: var(--space-2); } /* разом із gap — 4 px від назви */
 .pc-meta--compact { height: 18px; }
+/* мінімалістичний (НЕ за хартією, для порівняння; Figma 8638:2887): підпис 10 px і літера оцінки в квадратику 2 px радіуса.
+   Колір A — з макета, B–E — з офіційного модуля */
+.pc-meta--minimal { height: 16px; }
+.nutri-mini { display: inline-flex; align-items: center; gap: var(--space-4); color: var(--black-72); font-size: 10px; line-height: 1; white-space: nowrap; }
+.nutri-mini__grade { min-width: 14px; padding: 2px; border-radius: 2px; text-align: center; color: var(--white); font-size: 10px; line-height: 1; font-weight: var(--fw-bold); }
+.nutri-mini__grade--a { background: #0e8a4a; }
+.nutri-mini__grade--b { background: #86bc25; }
+.nutri-mini__grade--c { background: #ffcc00; }
+.nutri-mini__grade--d { background: #ef7d00; }
+.nutri-mini__grade--e { background: #e53312; }
+/* Nutri-Score «біля ваги»: рядок останній, після назви (4 px від неї); модуль ліворуч, вага одразу за ним через
+   інтерпункт «·» (6 px з обох боків), по центру висоти модуля; довга вага обрізається, модуль — ніколи */
+.pc-weight-row { display: flex; align-items: center; gap: var(--space-6); min-width: 0; margin-top: var(--space-2); }
+.pc-weight-row > .pc-meta + .pc-weight::before { content: '·'; margin-right: var(--space-6); color: var(--text-tertiary); font-weight: var(--fw-bold); }
+.pc-weight-row .pc-weight { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Nutri-Score на фото — першим у стовпчику баблів, по лівому краю */
+.pc-bubbles > .pc-meta--photo { flex: none; }
 
 /* Вага й назва: назва гумова, 2–3 рядки (кількість задає js/card.js); вільне місце лишається внизу картки */
 .pc-text { display: flex; flex-direction: column; }
+.plp-card--rules .pc-text { gap: var(--space-2); } /* «Нові правила»: 2 px повітря між вагою й назвою */
 .pc-weight { font-size: 11px; line-height: var(--lh-caption-sm); font-weight: var(--fw-semibold); }
 .pc-name {
   display: -webkit-box;
@@ -183,25 +235,6 @@
 .pc-carousel.pc-legacy { align-items: flex-start; }
 .pc-legacy .pc-name { flex: none; }
 .pc-legacy .pc-name--short { -webkit-line-clamp: 2; } /* «довга» картка: 2+ рядки під ціною — назва до 2 рядків */
-
-/* ---------- Debug-оверлей (демо-сторінка) ---------- */
-.pc-debug {
-  position: absolute;
-  left: 2px;
-  bottom: 2px;
-  z-index: 2;
-  max-width: 72px;
-  padding: 2px var(--space-4);
-  border-radius: var(--radius-4);
-  background: rgba(19, 19, 30, 0.82);
-  color: var(--white);
-  font-size: 9px;
-  line-height: 11px;
-  pointer-events: none;
-}
-.pc-debug b { color: #ffd84d; }
-.pc-debug-on .pc-slot { outline: 1px dashed var(--red-500); outline-offset: -1px; }
-.pc-debug-on .pc-name { outline: 1px dashed var(--blue-500); outline-offset: -1px; }
 
 /* «Підсвітити, де щось не влізло» (демо): картки, у яких правила щось сховали */
 .pc-highlight-hidden .plp-card:not([data-hidden=""]) {

@@ -16,7 +16,6 @@ Screens.cardDemo = function renderCardDemo(root) {
       <h1 class="plp-appbar__title">${D.title}</h1>
     </header>
 
-    <h2 class="demo-heading">Лістинг</h2>
     <div class="plp-grid demo-grid">${D.listing.map(i => Card.html(i)).join('')}</div>
 
     <h2 class="demo-heading">Карусель</h2>
@@ -34,7 +33,7 @@ Screens.cardDemo = function renderCardDemo(root) {
 /* ---------- Логіка відображення (справа від телефона) ----------
    Повна версія й журнал рішень — docs/card-rules.md; міняєте правило — оновіть обидва.
    Пункт, що відрізняється від налаштувань за замовчуванням, підсвічується (is-changed). */
-const DEMO_DEFAULTS = { rules: false, bbStyle: 'tag', discountStyle: 'tag', bbMode: 'row', oldPricePlace: 'row', discountPlace: 'row', nutriPlace: 'bottom', nutriStyle: 'official' };
+const DEMO_DEFAULTS = { rules: false, bbStyle: 'tag', discountStyle: 'tag', bbMode: 'row', discountPlace: 'row', installmentPlace: 'row', installmentShort: false, installmentStyle: 'tag', nutriPlace: 'bottom', nutriStyle: 'official' };
 
 function rulesSections(s) {
   const changed = key => s[key] !== DEMO_DEFAULTS[key];
@@ -84,89 +83,90 @@ function rulesSections(s) {
         item('Карусель стрибає: висота залежить від видимих карток.'),
       ] },
       { title: '«Очікується»', items: [
-        item('Замість «+» — плашка «Очікується»; фото й текст на 60%, Nutri-Score — ні.'),
+        item('Замість «+» — плашка «Очікується»; фото, текст і Nutri-Score на 60%.'),
       ] },
     ];
   }
 
   const slot = s.nutriPlace === 'slot';
+  const nutriPhoto = s.nutriPlace === 'photo';
+  const nutriWeight = s.nutriPlace === 'weight';
   const discPhoto = s.discountPlace === 'photo';
-  const nutriLook = s.nutriStyle === 'compact'
+  const instPhoto = s.installmentPlace === 'photo';
+  const instShort = !instPhoto && s.installmentShort;
+  const nutriLook = s.nutriStyle === 'minimal'
+    ? item('<b>Мінімалістичний:</b> підпис «Nutri-Score» 10 px і літера оцінки в кольоровому квадратику, 16 px. <b>Не відповідає хартії</b> — лише для порівняння.', 'nutriStyle')
+    : s.nutriStyle === 'compact'
     ? item('<b>Компактний:</b> без напису «NUTRI-SCORE» і білої підкладки, 18 px. <b>Не відповідає хартії</b> (с. 51) — лише для порівняння.', 'nutriStyle')
     : item('Офіційний горизонтальний модуль без змін, 26 px заввишки, однаковий у всіх.');
-  const oldPrice = s.oldPricePlace === 'row'
-    ? item('<b>Попередня ціна</b> — завжди окремим рядком під поточною (у рядку бенефітів, разом зі знижкою).', 'oldPricePlace')
-    : item('<b>Попередня ціна</b> — поруч із поточною, дрібніше й закреслена; не влазить — окремим рядком.', 'oldPricePlace');
-  const bbBadge = s.bbStyle === 'round'
-    ? item('Бейдж ББ на фото — <b>круглий</b> фіолетовий 32 px із сумою, округленою вниз: <code>+0.5</code>, <code>+12</code>, <code>+1.5к</code>.', 'bbStyle')
+  // Потік бейджів під ціною: що є в потоці за поточних перемикачів, у порядку Card.FLOW
+  const flowOrder = ['стара ціна', ...(discPhoto ? [] : ['знижка']), 'термін уцінки', ...(slot ? ['Nutri-Score (цілим рядком)'] : []),
+    ...(instPhoto ? [] : ['розтермінування']), ...(s.bbMode === 'row' ? ['ББ'] : [])].join(' → ');
+  const flowChanged = slot ? 'nutriPlace' : discPhoto ? 'discountPlace' : instPhoto ? 'installmentPlace' : s.bbMode === 'photo' ? 'bbMode' : undefined;
+  const oldPrice = item('<b>Попередня ціна</b> — перша в потоці під поточною ціною, поруч — тег знижки.');
+  const bbBadge = Card.bbRound()
+    ? item('Бейдж ББ на фото — <b>круглий</b> 32 px у кольорах прямокутного (світле тло, фіолетовий текст), монетка над сумою, округленою вниз: <code>+0.5</code>, <code>+12</code>, <code>+1.5к</code>.', 'bbStyle')
     : item('Бейдж ББ на фото — компактний, розміром із тег знижки; сума округлена вниз: <code>+0.5</code>, <code>+12</code>, <code>+1.5к</code>.');
   const bb = s.bbMode === 'photo'
-    ? item('<b>ББ на фото</b> — завжди бейджем із сумою; у рядку бенефітів його немає.', 'bbMode')
-    : item('<b>ББ в рядку</b> — завжди чипом <code>+12.21</code> у рядку бенефітів, на фото — фіолетовий бабл «б» без суми. Не влазить поруч зі знижкою — окремим рядком під нею; але якщо є термін уцінки чи розтермінування — вони важливіші: суму ББ не показуємо, а бабл «б» лишається на фото, якщо там є місце.');
+    ? item('<b>ББ на фото</b> — завжди бейджем із сумою; у потоці під ціною його немає.', 'bbMode')
+    : item('<b>ББ в рядку</b> — чипом <code>+12.21</code>, останнім у потоці під ціною; на фото — фіолетовий бабл «б» без суми. Не влізло в 2 рядки — суму не показуємо, бабл «б» лишається на фото, якщо там є місце.');
 
-  // Хто кого витісняє, коли місця не вистачає: зліва — сильніший
+  // Хто кого витісняє, коли місця не вистачає
   const displacement = [
-    item('<b>Термін уцінки не зникає ніколи</b> — він найсильніший (юридично обовʼязковий).'),
-    item('<b>Рядки під фото</b> (максимум 2), від сильнішого:'
-      + ' термін уцінки → бенефіти' + (slot ? ' → Nutri-Score' : '') + ' → розтермінування'
-      + (s.bbMode === 'row' ? ' → окремий рядок ББ' : '') + '.', slot ? 'nutriPlace' : (s.bbMode === 'photo' ? 'bbMode' : undefined)),
-    item('Термін уцінки витісняє розтермінування (обидва в слоті «Інфо»).'),
-    item('<b>Розтермінування</b> (усі товари від 1 000 ₴) витісняють лише термін уцінки' + (slot ? ' і Nutri-Score у слоті' : '')
-      + '. Знижка й ББ — ні' + (s.bbMode === 'row' ? ': окремий рядок ББ слабший за розтермінування' : '') + '.'),
+    item('<b>Термін уцінки не зникає ніколи</b> (юридично обовʼязковий).'),
+    item('<b>Потік під ціною</b> переноситься як текст, максимум 2 рядки; що не влізло — ховаємо з кінця: ' + flowOrder + '.', flowChanged),
+    item('Термін уцінки витісняє розтермінування — разом не показуємо.'),
     ...(s.bbMode === 'row' ? [
-      item('ББ не влазить поруч зі знижкою → окремим рядком; але є термін уцінки чи розтермінування → сума ББ <b>зникає</b> (на фото не перелітає), бабл «б» лишається, якщо на фото є місце.'),
+      item('ББ — останній: не влазить у 2 рядки → сума ББ <b>зникає</b> (на фото не перелітає), бабл «б» лишається, якщо на фото є місце.'),
     ] : [
-      item('ББ на фото — займає місце бабла, рядків під фото не витісняє.', 'bbMode'),
+      item('ББ на фото — займає місце бабла, потоку під ціною не витісняє.', 'bbMode'),
     ]),
+    ...(instShort ? [item('Коротке розтермінування (<code>x24</code>) частіше лишає місце для ББ у другому рядку.', 'installmentShort')] : []),
     item('Знижка витісняє «від 2 шт».'),
-    item(s.oldPricePlace === 'row'
-      ? 'Попередня ціна завжди окремим рядком — займає рядок бенефітів разом зі знижкою.'
-      : 'Попередня ціна поруч із поточною; не влазить — сама витісняється в рядок бенефітів.', 'oldPricePlace'),
-    ...(slot ? [] : [item('Nutri-Score нікого не витісняє: він поза лімітом.')]),
+    ...(slot ? [] : [item('Nutri-Score нікого не витісняє: він поза потоком.')]),
     item('<b>Бабли на фото</b> (максимум 2): «Я ще ОК»'
       + (discPhoto ? ' → знижка <code>−30%</code>' : '') + ' → промо → ББ. «Я ще ОК» не витісняється ніколи; промо можуть витіснити ББ.', discPhoto ? 'discountPlace' : undefined),
     ...(s.bbMode === 'photo' ? [item('На фото вже 2 бабли (напр. «Я ще ОК» і «%») → бейджу ББ із сумою немає місця, ББ у картці не видно.', 'bbMode')]
       : [item('На фото вже 2 бабли (напр. «Я ще ОК» і «%») → фіолетовому «б» немає місця, але сума ББ <code>+12.21</code> однаково видна під ціною.')]),
     ...(discPhoto ? [item('Знижка на фото витісняє бабл «%» — той самий сенс.', 'discountPlace')] : []),
-    ...(discPhoto && s.bbMode === 'photo' ? [item('<b>Знижка й ББ обидві на фото</b> → ліміт інший: 1 круглий бабл + 2 прямокутні (знижка й ББ) — на фото є і знижка, і ББ.', 'discountPlace')] : []),
+    ...(instPhoto ? [item('<b>Розтермінування на фото</b> — потоку не займає; кожен прямокутний бейдж понад перший (знижка + розтермінування) додає місце на фото. З ББ на фото — 1 круглий + усі прямокутні.', 'installmentPlace')] : []),
+    ...(discPhoto && s.bbMode === 'photo' ? [item('<b>Знижка й ББ обидві на фото</b> → ліміт інший: 1 круглий бабл + 2 прямокутні (знижка й ББ) — на фото є і знижка, і ББ. Якщо знижка й ББ теж круглі — круглих однаково не більше 2: ББ ховаємо.', 'discountPlace')] : []),
     item('Порядок на фото: спершу круглі бабли (зокрема фіолетовий «б» ББ), далі знижка, далі бейдж ББ із сумою.'),
   ];
 
   return [
     { title: 'Порядок під фото', ordered: true, items: [
       item('Ціна — завжди перша'),
-      discPhoto
-        ? item('Бенефіти: попередня ціна (окремим рядком), ББ або «від 2 шт»', 'discountPlace')
-        : item('Бенефіти: знижка, ББ або «від 2 шт»'),
-      item('Інфо: термін уцінки або розтермінування (усі товари від 1 000 ₴)'),
-      ...(slot ? [item('Мета: Nutri-Score', 'nutriPlace')] : []),
-      item('Вага'),
+      item('Потік бейджів: ' + flowOrder + ' (замість старої ціни й знижки може бути «від 2 шт»)', flowChanged),
+      ...(nutriWeight || slot ? [] : [item('Вага')]),
       item('Назва, максимум 3 рядки (за потреби 2)'),
-      ...(slot ? [] : [item('Nutri-Score — одразу під назвою')]),
+      ...(slot ? [item('Вага — під назвою', 'nutriPlace')] : []),
+      ...(nutriWeight ? [item('Останній рядок: Nutri-Score і одразу за ним вага', 'nutriPlace')] : []),
+      ...(slot || nutriPhoto || nutriWeight ? [] : [item('Nutri-Score — одразу під назвою')]),
     ] },
-    { title: 'Ліміт рядків', items: slot ? [
-      item('Бенефіти, інфо й мета — додаткові рядки, максимум <b>2</b>.', 'nutriPlace'),
-      item('Зайве ховаємо з кінця: термін уцінки → бенефіти → мета → розтермінування (термін — ніколи).', 'nutriPlace'),
-      item('«Довга» картка — 2 додаткові рядки → назва 2 рядки (решта — 3).'),
-    ] : [
-      item('Бенефіти й інфо — додаткові рядки, максимум <b>2</b>.'),
-      item('Зайве ховаємо з кінця: термін уцінки → бенефіти → розтермінування (термін — ніколи).'),
-      item('Nutri-Score у ліміт не рахується.'),
-      item('«Довга» картка — 2 додаткові рядки → назва 2 рядки (решта — 3).'),
+    { title: 'Ліміт рядків', items: [
+      item('Під ціною — один потік бейджів, переноситься як текст, максимум <b>2</b> рядки.'),
+      item('Що не влізло — ховаємо з кінця потоку (термін уцінки — ніколи).'),
+      slot ? item('Nutri-Score у слоті — цілим рядком потоку.', 'nutriPlace') : item('Nutri-Score у ліміт не рахується.'),
+      item('«Довга» картка — потік у 2 рядки → назва 2 рядки (решта — 3).'),
     ] },
     { title: 'Хто кого витісняє', items: displacement },
     { title: 'Не показуємо разом', items: [
       item('Є знижка → без «від 2 шт».'),
       item('Є термін уцінки → без розтермінування.'),
-      item('Сума ББ — лише в одному місці: чипом у рядку або бейджем на фото.'),
-      item('Є «від 2 шт» → ББ на фото.'),
+      item('Сума ББ — лише в одному місці: чипом у потоці або бейджем на фото.'),
     ] },
     { title: 'Ціна і ББ', items: [
       oldPrice,
       discPhoto
         ? item('<b>Знижка на фото</b> — ' + (Card.discountRound()
             ? 'круглим бейджем, як «%», але з величиною <code>−30%</code>' : 'тегом <code>−30%</code>') + ' замість тегу в рядку.', 'discountPlace')
-        : item('<b>Знижка в рядку</b> — тег <code>−30%</code> у рядку бенефітів.'),
+        : item('<b>Знижка в рядку</b> — тег <code>−30%</code> у потоці, одразу після старої ціни.'),
+      instPhoto
+        ? item('<b>Розтермінування на фото</b> — ' + (Card.installmentRound() ? 'круглий бейдж 32 px, іконка над <code>x24</code>' : 'компактний прямокутний бейдж <code>x24</code> з іконкою') + ', після знижки й перед ББ. Круглих на фото — не більше 2. Термін уцінки однаково його витісняє.', 'installmentPlace')
+        : instShort
+          ? item('<b>Розтермінування коротко</b> — <code>x24</code> з іконкою на тій самій плашці, у потоці після терміну, перед ББ.', 'installmentShort')
+          : item('<b>Розтермінування в рядку</b> — чип <code>x24 платежі</code> у потоці після терміну, перед ББ.'),
       bb,
       bbBadge,
       item('До 10 000 ₴ — з копійками (<code>170.00 ₴</code>), від 10 000 ₴ — без (<code>157 999 ₴</code>).'),
@@ -175,12 +175,17 @@ function rulesSections(s) {
       discPhoto
         ? item('Максимум <b>2</b>: «Я ще ОК» → знижка <code>−30%</code> → промо → ББ. Бабл «%» не показуємо — знижка вже на фото.', 'discountPlace')
         : item('Максимум <b>2</b>: «Я ще ОК» → промо → ББ.'),
+      ...(instPhoto ? [item('Розтермінування <code>x24</code> — прямокутним бейджем одразу після знижки, перед ББ; сильніше за промо.', 'installmentPlace')] : []),
     ] },
     { title: 'Nutri-Score', items: [
       nutriLook,
       slot
-        ? item('У слоті «Мета» між інфо й вагою; рахується в ліміт і може бути схований.', 'nutriPlace')
-        : item('Одразу під назвою, не відриваємо: вільне місце — внизу картки.'),
+        ? item('У слоті — цілим рядком у потоці під ціною, після терміну уцінки; рахується в ліміт і може бути схований.', 'nutriPlace')
+        : nutriWeight
+          ? item('<b>Біля ваги</b> — останнім рядком після назви (4 px від неї): модуль ліворуч, вага одразу за ним через інтерпункт «·». Рядок 26 px; у ліміт не рахується, ніколи не ховається; довга вага обрізається «…», модуль — ні.', 'nutriPlace')
+        : nutriPhoto
+          ? item('<b>На фото</b> — першим у лівому верхньому куті, над баблами. Не займає рядків під фото й місця бабла, ніколи не ховається. Розміщення поверх фото перевірити за хартією.', 'nutriPlace')
+          : item('Одразу під назвою, не відриваємо: вільне місце — внизу картки.'),
     ] },
     { title: 'Велнес-теги', items: [
       item('У лістингу не показуємо: «Веган», «Без цукру» — чипами на сторінці товару.'),
@@ -188,12 +193,12 @@ function rulesSections(s) {
     ] },
     { title: 'Висота й вирівнювання', items: [
       item('Ціни й низ карток у ряду — на одній лінії.'),
-      item('Рівень картки: <b>A</b> — 0–1 доп. рядок, <b>B</b> — 2. Ряд — за найвищим рівнем.'),
+      item('Рівень картки: <b>A</b> — потік у 0–1 рядок, <b>B</b> — у 2. Ряд — за найвищим рівнем.'),
       item('Карусель — завжди рівень B, висота не стрибає.'),
-      item('Назва: 3 рядки; у «довгої» картки (два додаткові рядки) — завжди 2, навіть якщо в ряду є місце.'),
+      item('Назва: 3 рядки; у «довгої» картки (потік у 2 рядки) — завжди 2, навіть якщо в ряду є місце.'),
     ] },
     { title: '«Очікується»', items: [
-      item('Замість «+» — плашка «Очікується»; фото й текст на 60%, Nutri-Score — ні.'),
+      item('Замість «+» — плашка «Очікується»; фото, текст і Nutri-Score на 60%.'),
     ] },
   ];
 }
@@ -204,10 +209,10 @@ function renderRules() {
   const s = Card.settings;
   const mode = !s.rules ? 'Як є'
     : `Нові правила · Знижка: ${s.discountPlace === 'photo' ? 'на фото' + (Card.discountRound() ? ', кругла' : '') : 'в рядку'}`
-      + ` · Попередня ціна: ${s.oldPricePlace === 'row' ? 'окремим рядком' : 'із поточною'}`
-      + ` · ББ: ${s.bbMode === 'photo' ? 'на фото' + (s.bbStyle === 'round' ? ', круглий' : '') : 'в рядку'}`
-      + ` · Nutri-Score: ${s.nutriPlace === 'slot' ? 'у слоті «Мета»' : 'під назвою'}`
-      + (s.nutriStyle === 'compact' ? ', компактний' : '');
+      + ` · Розтермінування: ${s.installmentPlace === 'photo' ? 'на фото' + (Card.installmentRound() ? ', кругле' : '') : 'в рядку' + (s.installmentShort ? ', коротке' : '')}`
+      + ` · ББ: ${s.bbMode === 'photo' ? 'на фото' + (Card.bbRound() ? ', круглий' : '') : 'в рядку'}`
+      + ` · Nutri-Score: ${{ slot: 'у слоті «Мета»', photo: 'на фото', weight: 'біля ваги', bottom: 'під назвою' }[s.nutriPlace]}`
+      + ({ compact: ', компактний', minimal: ', мінімалістичний' }[s.nutriStyle] || '');
   el.innerHTML = `
     <h2 class="demo-rules__title">Логіка відображення</h2>
     <p class="demo-rules__mode">${mode}</p>
@@ -253,9 +258,17 @@ document.addEventListener('change', e => {
     renderRules();
     renderHiddenCount();
   }
-  if (e.target.matches('[data-debug]')) {
-    Card.settings.debug = e.target.checked;
+  if (e.target.matches('[data-installment-short]')) {
+    Card.settings.installmentShort = e.target.checked;
     Card.relayout();
+    renderRules();
+    renderHiddenCount();
+  }
+  if (e.target.matches('[data-installment-round]')) {
+    Card.settings.installmentStyle = e.target.checked ? 'round' : 'tag';
+    Card.relayout();
+    renderRules();
+    renderHiddenCount();
   }
   if (e.target.matches('[data-highlight-hidden]')) {
     Card.settings.highlightHidden = e.target.checked;
@@ -264,10 +277,12 @@ document.addEventListener('change', e => {
   }
 });
 
-/** Тумблери «Круглий» мають сенс лише коли знижка / ББ «На фото» — інакше неактивні */
+/** Тумблери «Круглий» мають сенс лише коли знижка / розтермінування / ББ «На фото», «Коротке» — лише з розтермінуванням «В рядку» */
 function syncDiscountRound() {
   [['[data-discount-round]', Card.settings.discountPlace === 'photo'],
-   ['[data-bb-round]', Card.settings.bbMode === 'photo']].forEach(([sel, active]) => {
+   ['[data-bb-round]', Card.settings.bbMode === 'photo'],
+   ['[data-installment-round]', Card.settings.installmentPlace === 'photo'],
+   ['[data-installment-short]', Card.settings.installmentPlace === 'row']].forEach(([sel, active]) => {
     const input = document.querySelector(sel);
     if (!input) return;
     input.disabled = !active;
