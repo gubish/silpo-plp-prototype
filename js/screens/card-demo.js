@@ -332,6 +332,27 @@ document.addEventListener('change', e => {
 });
 
 
+/* «Підсвітити, де щось не влізло»: підказка «Не влізло: …» не лише при наведенні (title), а й по кліку на картку —
+   на телефоні наведення немає. Клік по картці в цьому режимі не відкриває товар; «+» і «обране» працюють як завжди.
+   Слухач стоїть раніше за app.js, тож може зупинити перехід. */
+document.addEventListener('click', e => {
+  const open = document.querySelector('.pc-hidden-tip');
+  const card = e.target.closest('#cardDemo .plp-card');
+  if (!Card.settings.highlightHidden || !card || !card.dataset.hidden || e.target.closest('[data-add], [data-remove], [data-like]')) {
+    if (open && !e.target.closest('.pc-hidden-tip')) open.remove();
+    return;
+  }
+  e.stopImmediatePropagation();
+  const same = open && open.parentElement === card;
+  if (open) open.remove();
+  if (same) return; // повторний клік ховає підказку
+  const tip = document.createElement('div');
+  tip.className = 'pc-hidden-tip';
+  tip.setAttribute('role', 'status');
+  tip.textContent = 'Не влізло: ' + card.dataset.hidden;
+  card.appendChild(tip);
+});
+
 /** Тумблери «Круглий» мають сенс лише коли знижка / розтермінування / ББ «На фото», «Коротке» — лише з розтермінуванням «В рядку» */
 function syncDiscountRound() {
   [['[data-discount-round]', Card.settings.discountPlace === 'photo'],

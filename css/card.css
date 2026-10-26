@@ -243,3 +243,19 @@
   border-radius: var(--radius-8);
   background: rgba(255, 10, 59, 0.06);
 }
+.pc-highlight-hidden .plp-card:not([data-hidden=""]) { cursor: help; }
+/* підказка «Не влізло: …» по кліку — поверх верху фото (у каруселі нижче картки не видно) */
+.pc-hidden-tip {
+  position: absolute;
+  top: 0;
+  left: -4px;
+  right: -4px;
+  z-index: 3;
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-8);
+  background: rgba(19, 19, 30, 0.9);
+  color: var(--white);
+  font-size: var(--fs-caption-sm);
+  line-height: var(--lh-caption-sm);
+  white-space: normal;
+}
