@@ -8,6 +8,58 @@
 // Демо відкривається в стані «Як є» (стара картка); лістинг прототипу — з новими правилами
 Card.settings.rules = false;
 
+/* ---------- Налаштування в адресі ----------
+   Обрані перемикачі — у query-рядку (?rules=1&discount=photo…), лише ті, що відрізняються від стартових.
+   Посилання відкриває саме цю комбінацію. Ключ у Card.settings → назва параметра в адресі */
+const URL_KEYS = {
+  rules: 'rules', discountPlace: 'discount', discountStyle: 'discountStyle',
+  installmentPlace: 'installment', installmentShort: 'installmentShort', installmentStyle: 'installmentStyle',
+  bbMode: 'bb', bbStyle: 'bbStyle', nutriPlace: 'nutri', nutriStyle: 'nutriStyle',
+  roundBubbles: 'round', highlightHidden: 'highlight',
+};
+const START = Object.fromEntries(Object.keys(URL_KEYS).map(k => [k, Card.settings[k]]));
+const ROUND_STYLES = ['tag', 'round'];
+
+/** Значення з адреси → Card.settings (невідомі значення пропускаємо) */
+function readUrl() {
+  const q = new URLSearchParams(location.search);
+  Object.entries(URL_KEYS).forEach(([key, name]) => {
+    if (!q.has(name)) return;
+    const v = q.get(name);
+    if (typeof START[key] === 'boolean') { Card.settings[key] = v === '1'; return; }
+    const allowed = key.endsWith('Style') && key !== 'nutriStyle'
+      ? ROUND_STYLES.includes(v)
+      : !!document.querySelector(`[data-setting="${key}"][data-value="${CSS.escape(v)}"]`);
+    if (allowed) Card.settings[key] = v;
+  });
+}
+
+/** Card.settings → адреса (без нового запису в історії) */
+function saveUrl() {
+  const q = new URLSearchParams();
+  Object.entries(URL_KEYS).forEach(([key, name]) => {
+    const v = Card.settings[key];
+    if (v !== START[key]) q.set(name, typeof v === 'boolean' ? (v ? '1' : '0') : v);
+  });
+  const search = q.toString();
+  history.replaceState(null, '', location.pathname + (search ? '?' + search : '') + location.hash);
+}
+
+/** Панель показує поточні Card.settings (після читання адреси) */
+function syncPanel() {
+  const s = Card.settings;
+  document.querySelectorAll('[data-setting]').forEach(b =>
+    b.setAttribute('aria-pressed', String(String(s[b.dataset.setting]) === b.dataset.value)));
+  [['[data-discount-round]', s.discountStyle === 'round'], ['[data-bb-round]', s.bbStyle === 'round'],
+   ['[data-installment-round]', s.installmentStyle === 'round'], ['[data-installment-short]', s.installmentShort],
+   ['[data-round-bubbles]', s.roundBubbles], ['[data-highlight-hidden]', s.highlightHidden]].forEach(([sel, on]) => {
+    const input = document.querySelector(sel);
+    if (input) input.checked = on;
+  });
+  document.querySelectorAll('.demo-panel__rules-only').forEach(el => el.classList.toggle('is-disabled', !s.rules));
+  syncDiscountRound();
+}
+
 Screens.cardDemo = function renderCardDemo(root) {
   const D = DATA.cardDemo;
 
@@ -239,6 +291,7 @@ document.addEventListener('click', e => {
   Card.relayout();
   renderRules();
   renderHiddenCount();
+  saveUrl();
 });
 
 document.addEventListener('change', e => {
@@ -275,7 +328,9 @@ document.addEventListener('change', e => {
     Card.relayout();
     renderHiddenCount();
   }
+  saveUrl();
 });
+
 
 /** Тумблери «Круглий» мають сенс лише коли знижка / розтермінування / ББ «На фото», «Коротке» — лише з розтермінуванням «В рядку» */
 function syncDiscountRound() {
@@ -301,3 +356,8 @@ function renderHiddenCount() {
     ? `Щось не влізло в ${names.size} ${names.size === 1 ? 'товарі' : 'товарах'} (лістинг і карусель).`
     : 'У цій комбінації все влазить.';
 }
+
+// стан із посилання — до першого рендеру (app.js малює екран після завантаження скриптів)
+readUrl();
+syncPanel();
+renderHiddenCount();
